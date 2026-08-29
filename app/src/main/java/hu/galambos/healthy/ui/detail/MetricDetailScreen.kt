@@ -198,6 +198,7 @@ private fun WindowSelector(selected: TrendWindow, onChange: (TrendWindow) -> Uni
                             when (window) {
                                 TrendWindow.Week -> R.string.window_week
                                 TrendWindow.Month -> R.string.window_month
+                                TrendWindow.Quarter -> R.string.window_quarter
                             },
                         ),
                     )

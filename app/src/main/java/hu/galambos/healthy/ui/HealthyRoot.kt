@@ -45,7 +45,7 @@ fun HealthyRoot(
         viewModel.refreshAccess()
         // Throttled inside; coming back from Mi Fitness after a sync is the
         // normal way new data arrives.
-        dashboardViewModel.load()
+        dashboardViewModel.refresh()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -54,7 +54,7 @@ fun HealthyRoot(
         // The result set is ignored on purpose: the repository is the single
         // source of truth for what is granted, and a partial grant is normal.
         viewModel.refreshAccess()
-        dashboardViewModel.load(force = true)
+        dashboardViewModel.refresh(force = true)
     }
 
     // Only HealthyApp brings a Scaffold, which handles its own insets. The
@@ -93,7 +93,7 @@ fun HealthyRoot(
             onMassChange = { settingsViewModel.setMassUnit(it) },
             onDistanceChange = { settingsViewModel.setDistanceUnit(it) },
             onNameChange = { settingsViewModel.setName(it) },
-            onRefresh = { dashboardViewModel.load(force = true) },
+            onRefresh = { dashboardViewModel.refresh(force = true) },
         )
     }
 }

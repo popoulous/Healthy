@@ -3,12 +3,16 @@ package hu.galambos.healthy.domain.summary
 import java.time.LocalDate
 
 /**
- * How far back a card looks. Seven and thirty days for now; ninety was
- * deliberately left for later, once there is a chart worth stretching.
+ * How far back a card looks.
+ *
+ * Ninety days was deferred while every window meant re-reading Health Connect;
+ * with the local archive it costs nothing more than a longer query against a
+ * table that is already there.
  */
 enum class TrendWindow(val days: Int) {
     Week(7),
     Month(30),
+    Quarter(90),
     ;
 
     /** The days of the window, oldest first, ending with [today]. */

@@ -10,6 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.galambos.healthy.data.health.HealthConnectRepository
+import hu.galambos.healthy.data.local.HealthyDatabase
+import hu.galambos.healthy.data.local.MetricStore
+import hu.galambos.healthy.data.sync.HealthSync
 import hu.galambos.healthy.data.settings.SettingsStore
 import hu.galambos.healthy.data.settings.ThemeChoice
 import hu.galambos.healthy.ui.AppViewModel
@@ -28,6 +31,8 @@ class MainActivity : ComponentActivity() {
         // a dependency injection framework.
         val repository = HealthConnectRepository(applicationContext)
         val settingsStore = SettingsStore(applicationContext)
+        val metricStore = MetricStore(HealthyDatabase.get(applicationContext))
+        val sync = HealthSync(repository, metricStore)
 
         setContent {
             val settingsViewModel: SettingsViewModel =
@@ -46,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     HealthyRoot(
                         viewModel = viewModel(factory = AppViewModel.factory(repository)),
                         dashboardViewModel = viewModel(
-                            factory = DashboardViewModel.factory(repository),
+                            factory = DashboardViewModel.factory(repository, metricStore, sync),
                         ),
                         settingsViewModel = settingsViewModel,
                     )

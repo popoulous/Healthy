@@ -5,15 +5,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import hu.galambos.healthy.data.HealthRepository
+import hu.galambos.healthy.data.local.MetricStore
+import hu.galambos.healthy.data.sync.HealthSync
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.sleep.SleepNight
-import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
 import hu.galambos.healthy.domain.summary.TrendWindow
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,52 +34,73 @@ data class DashboardState(
         summaries[id] ?: MetricSummary(id, LoadState.Loading)
 }
 
-class DashboardViewModel(private val repository: HealthRepository) : ViewModel() {
+/**
+ * The dashboard reads the local store and shows whatever is there, then syncs
+ * in the background and lets the store push the update through.
+ *
+ * That ordering is the point: the screen fills immediately from what was kept
+ * last time instead of waiting on thirty-three queries against Health Connect.
+ */
+class DashboardViewModel(
+    private val repository: HealthRepository,
+    private val store: MetricStore,
+    private val sync: HealthSync,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
-    private var loadJob: Job? = null
-    private var lastLoadAt = 0L
+    private var observeJob: Job? = null
+    private var syncJob: Job? = null
+    private var lastSyncAt = 0L
+
+    /** Metrics with no permission, so the store's "empty" is not shown as data. */
+    private var refused: Set<MetricId> = emptySet()
 
     init {
-        load(force = true)
+        observeStore()
+        refresh(force = true)
+    }
+
+    private fun observeStore() {
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
+            store.observeSummaries(_state.value.window).collect { fromStore ->
+                _state.update { it.copy(summaries = overlayRefusals(fromStore)) }
+            }
+        }
+    }
+
+    /**
+     * "Nothing was written" and "you did not allow this" look identical in the
+     * store — both are simply absent. Only the permission state can tell them
+     * apart, and the difference is the whole point of the empty card.
+     */
+    private fun overlayRefusals(
+        summaries: Map<MetricId, MetricSummary>,
+    ): Map<MetricId, MetricSummary> = summaries.mapValues { (id, summary) ->
+        if (id in refused) MetricSummary(id, LoadState.NotGranted) else summary
     }
 
     /**
      * Called on launch, on every return to the foreground, and on pull. The
      * middle one is why the throttle exists: switching to Mi Fitness to sync
-     * and back is the normal way to use this, but so is flicking between apps,
-     * and re-querying every metric each time walks straight into Health
-     * Connect's rate limit.
+     * and back is the normal way to use this, but so is flicking between apps.
      */
-    fun load(force: Boolean = false) {
+    fun refresh(force: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (!force && now - lastLoadAt < MIN_RELOAD_INTERVAL_MS) return
-        lastLoadAt = now
+        if (!force && now - lastSyncAt < MIN_RELOAD_INTERVAL_MS) return
+        lastSyncAt = now
 
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            // A reload means the night may have changed too.
-            _state.update { it.copy(sleepNight = null) }
+        syncJob?.cancel()
+        syncJob = viewModelScope.launch {
             _state.update { it.copy(loading = true) }
-            val window = _state.value.window
-            // Sequential on purpose: the cards fill in as answers arrive,
-            // which reads better than a long blank wait, and it keeps the
-            // request rate well under the limit.
-            for (descriptor in MetricRegistry.all) {
-                var summary = repository.loadSummary(descriptor, window)
+            refused = MetricRegistry.all
+                .filterNot { repository.isGranted(it) }
+                .mapTo(mutableSetOf()) { it.id }
+            _state.update { it.copy(summaries = overlayRefusals(it.summaries)) }
 
-                // Health Connect rate-limits reads. One backoff is enough:
-                // the limit is short-lived, and a metric that fails twice is
-                // better shown as failed than retried into the ground.
-                if (summary.state == LoadState.Failed(FailureReason.RateLimited)) {
-                    delay(RATE_LIMIT_BACKOFF_MS)
-                    summary = repository.loadSummary(descriptor, window)
-                }
-
-                _state.update { it.copy(summaries = it.summaries + (descriptor.id to summary)) }
-            }
+            sync.sync()
             _state.update { it.copy(loading = false) }
         }
     }
@@ -96,15 +117,20 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
     fun setWindow(window: TrendWindow) {
         if (window == _state.value.window) return
         _state.update { it.copy(window = window) }
-        load(force = true)
+        // The window only changes how much of the archive is drawn; no new read
+        // is needed for it.
+        observeStore()
     }
 
     companion object {
         private const val MIN_RELOAD_INTERVAL_MS = 60_000L
-        private const val RATE_LIMIT_BACKOFF_MS = 1_500L
 
-        fun factory(repository: HealthRepository) = viewModelFactory {
-            initializer { DashboardViewModel(repository) }
+        fun factory(
+            repository: HealthRepository,
+            store: MetricStore,
+            sync: HealthSync,
+        ) = viewModelFactory {
+            initializer { DashboardViewModel(repository, store, sync) }
         }
     }
 }

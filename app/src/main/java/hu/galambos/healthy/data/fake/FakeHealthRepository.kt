@@ -1,5 +1,6 @@
 package hu.galambos.healthy.data.fake
 
+import hu.galambos.healthy.data.ChangePoll
 import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.HistoryAccess
@@ -15,8 +16,10 @@ import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
 import hu.galambos.healthy.domain.summary.TrendWindow
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.sin
@@ -26,9 +29,9 @@ import kotlin.random.Random
  * Plausible data with no phone attached.
  *
  * This ships in the app rather than living in the test source set, because
- * Compose previews need it too — and a preview that renders the real card
- * with real-shaped numbers is the only way to judge the design without
- * building to a device that happens to own a watch.
+ * Compose previews need it too — and a preview that renders the real card with
+ * real-shaped numbers is the only way to judge the design without building to a
+ * device that happens to own a watch.
  */
 class FakeHealthRepository(
     private val availability: HealthConnectAvailability = HealthConnectAvailability.Available,
@@ -49,43 +52,39 @@ class FakeHealthRepository(
     override suspend fun historyAccess(): HistoryAccess =
         if (granted) HistoryAccess.Granted else HistoryAccess.NotGranted
 
-    override suspend fun loadSummary(
+    override suspend fun isGranted(descriptor: MetricDescriptor): Boolean =
+        granted && overrides[descriptor.id] != LoadState.NotGranted
+
+    override suspend fun readLatest(descriptor: MetricDescriptor): DataPoint? =
+        summaryOf(descriptor, TrendWindow.Week).latest
+
+    override suspend fun readDailyValues(
         descriptor: MetricDescriptor,
-        window: TrendWindow,
-    ): MetricSummary = summaryOf(descriptor, window)
-
-    /** The same data without suspending, so Compose previews can call it. */
-    fun summaryOf(descriptor: MetricDescriptor, window: TrendWindow): MetricSummary {
-        overrides[descriptor.id]?.let { state ->
-            return MetricSummary(descriptor.id, state)
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<LocalDate, Double> {
+        var date = from
+        val values = mutableMapOf<LocalDate, Double>()
+        var index = 0
+        while (!date.isAfter(to)) {
+            seriesValue(descriptor, index)?.let { values[date] = it }
+            date = date.plusDays(1)
+            index++
         }
-        if (!granted) return MetricSummary(descriptor.id, LoadState.NotGranted)
-
-        val trend = window.dates(today).mapIndexed { index, date ->
-            Bucket(date, seriesValue(descriptor, index))
-        }
-        val latest = trend.lastOrNull { it.value != null }
-        return MetricSummary(
-            id = descriptor.id,
-            state = LoadState.Loaded,
-            latest = latest?.let {
-                DataPoint(
-                    value = it.value ?: 0.0,
-                    time = Instant.now().minus(3, ChronoUnit.HOURS),
-                    sourcePackage = sourceFor(descriptor.id),
-                )
-            },
-            trend = trend,
-        )
+        return values
     }
+
+    override suspend fun newChangesToken(): String? = "fake-token"
+
+    override suspend fun pollChanges(token: String): ChangePoll =
+        ChangePoll.Changes(affected = emptyMap(), deletions = false, nextToken = token)
 
     override suspend fun loadSleepNight(): SleepNight? = sleepNight()
 
     /** A night with the shape a real one has: cycles, not one block. */
     fun sleepNight(): SleepNight? {
         if (!granted) return null
-        val start = today.minusDays(1).atTime(22, 30).atZone(java.time.ZoneId.systemDefault())
-            .toInstant()
+        val start = today.minusDays(1).atTime(22, 30).atZone(ZoneId.systemDefault()).toInstant()
         val pattern = listOf(
             SleepStage.Light to 35L,
             SleepStage.Deep to 55L,
@@ -103,7 +102,7 @@ class FakeHealthRepository(
         )
         var cursor = start
         val segments = pattern.map { (stage, minutes) ->
-            val end = cursor.plus(java.time.Duration.ofMinutes(minutes))
+            val end = cursor.plus(Duration.ofMinutes(minutes))
             SleepSegment(stage, cursor, end).also { cursor = end }
         }
         return SleepNight(
@@ -112,6 +111,29 @@ class FakeHealthRepository(
             sourcePackage = "com.xiaomi.wearable",
             segments = segments,
             vitals = SleepVitals(heartRateBpm = 58.0, oxygenPercent = 97.0, respiratoryRate = 16.0),
+        )
+    }
+
+    /** A finished card without suspending, so Compose previews can call it. */
+    fun summaryOf(descriptor: MetricDescriptor, window: TrendWindow): MetricSummary {
+        overrides[descriptor.id]?.let { state -> return MetricSummary(descriptor.id, state) }
+        if (!granted) return MetricSummary(descriptor.id, LoadState.NotGranted)
+
+        val trend = window.dates(today).mapIndexed { index, date ->
+            Bucket(date, seriesValue(descriptor, index))
+        }
+        val latest = trend.lastOrNull { it.value != null }
+        return MetricSummary(
+            id = descriptor.id,
+            state = LoadState.Loaded,
+            latest = latest?.let {
+                DataPoint(
+                    value = it.value ?: 0.0,
+                    time = Instant.now().minus(3, ChronoUnit.HOURS),
+                    sourcePackage = sourceFor(descriptor.id),
+                )
+            },
+            trend = trend,
         )
     }
 

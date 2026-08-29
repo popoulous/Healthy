@@ -192,4 +192,5 @@
     <string name="overview_more">Everything else</string>
     <string name="header_date">%1$s, %2$s</string>
     <string name="header_subtitle">Here is your health today</string>
+    <string name="window_quarter">90 days</string>
 </resources>

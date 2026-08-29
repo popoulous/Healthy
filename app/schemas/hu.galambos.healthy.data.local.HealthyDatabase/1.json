@@ -1,0 +1,138 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "85a8fa43c864d95ceb8102ca5df5ac0e",
+    "entities": [
+      {
+        "tableName": "daily_bucket",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`metricId` TEXT NOT NULL, `epochDay` INTEGER NOT NULL, `value` REAL NOT NULL, PRIMARY KEY(`metricId`, `epochDay`))",
+        "fields": [
+          {
+            "fieldPath": "metricId",
+            "columnName": "metricId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "epochDay",
+            "columnName": "epochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "metricId",
+            "epochDay"
+          ]
+        }
+      },
+      {
+        "tableName": "latest_reading",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`metricId` TEXT NOT NULL, `value` REAL NOT NULL, `timeEpochMillis` INTEGER NOT NULL, `sourcePackage` TEXT NOT NULL, PRIMARY KEY(`metricId`))",
+        "fields": [
+          {
+            "fieldPath": "metricId",
+            "columnName": "metricId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "value",
+            "columnName": "value",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeEpochMillis",
+            "columnName": "timeEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourcePackage",
+            "columnName": "sourcePackage",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "metricId"
+          ]
+        }
+      },
+      {
+        "tableName": "scale_measurement",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timeEpochMillis` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `impedanceOhms` INTEGER, PRIMARY KEY(`timeEpochMillis`))",
+        "fields": [
+          {
+            "fieldPath": "timeEpochMillis",
+            "columnName": "timeEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weightKg",
+            "columnName": "weightKg",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "impedanceOhms",
+            "columnName": "impedanceOhms",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "timeEpochMillis"
+          ]
+        }
+      },
+      {
+        "tableName": "sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `changesToken` TEXT, `lastSyncEpochMillis` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changesToken",
+            "columnName": "changesToken",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastSyncEpochMillis",
+            "columnName": "lastSyncEpochMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '85a8fa43c864d95ceb8102ca5df5ac0e')"
+    ]
+  }
+}

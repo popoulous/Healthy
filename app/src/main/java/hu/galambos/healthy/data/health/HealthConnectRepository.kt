@@ -3,24 +3,31 @@ package hu.galambos.healthy.data.health
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
+import androidx.health.connect.client.changes.DeletionChange
+import androidx.health.connect.client.changes.UpsertionChange
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.request.ChangesTokenRequest
+import hu.galambos.healthy.data.ChangePoll
 import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.HistoryAccess
 import hu.galambos.healthy.domain.metric.MetricDescriptor
+import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.sleep.SleepNight
-import hu.galambos.healthy.domain.summary.FailureReason
-import hu.galambos.healthy.domain.summary.LoadState
-import hu.galambos.healthy.domain.summary.MetricSummary
-import hu.galambos.healthy.domain.summary.TrendWindow
+import hu.galambos.healthy.domain.summary.DataPoint
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The only class in the app that talks to the Health Connect SDK.
  */
-class HealthConnectRepository(private val context: Context) : HealthRepository {
+class HealthConnectRepository(
+    private val context: Context,
+    private val zone: ZoneId = ZoneId.systemDefault(),
+) : HealthRepository {
 
     private val client: HealthConnectClient? by lazy {
         if (availability() == HealthConnectAvailability.Available) {
@@ -29,6 +36,8 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
             null
         }
     }
+
+    private val reader: SummaryReader? by lazy { client?.let { SummaryReader(it, zone) } }
 
     override fun availability(): HealthConnectAvailability =
         when (HealthConnectClient.getSdkStatus(context)) {
@@ -49,10 +58,6 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
         }
 
     /**
-     * Re-read whenever access is checked, then reused while a dashboard load
-     * runs. Asking Health Connect once per metric would cost a round trip per
-     * card for an answer that cannot change mid-load.
-     *
      * Null means "never asked", which is not the same as "nothing granted" —
      * the dashboard starts loading at the same moment the access check does,
      * and treating the empty cache as an answer showed every card as refused.
@@ -68,64 +73,81 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
 
     private suspend fun granted(): Set<String> = cachedGranted ?: grantedPermissions()
 
+    override suspend fun isGranted(descriptor: MetricDescriptor): Boolean =
+        client != null && HealthPermission.getReadPermission(descriptor.recordType) in granted()
+
     override suspend fun historyAccess(): HistoryAccess = when {
         !isHistorySupported() -> HistoryAccess.Unsupported
-        HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY in grantedPermissions() ->
-            HistoryAccess.Granted
+        HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY in granted() -> HistoryAccess.Granted
         else -> HistoryAccess.NotGranted
     }
 
-    override suspend fun loadSummary(
-        descriptor: MetricDescriptor,
-        window: TrendWindow,
-    ): MetricSummary {
-        val client = client
-            ?: return MetricSummary(descriptor.id, LoadState.NotGranted)
-        if (HealthPermission.getReadPermission(descriptor.recordType) !in granted()) {
-            return MetricSummary(descriptor.id, LoadState.NotGranted)
-        }
+    override suspend fun readLatest(descriptor: MetricDescriptor): DataPoint? =
+        guard { reader?.readLatest(descriptor) }
 
-        val reader = SummaryReader(client)
-        return try {
-            val latest = reader.readLatest(descriptor, window)
-            val trend = reader.readTrend(descriptor, window)
-            if (latest == null) {
-                // Permission held, nothing written: a source app that does not
-                // share this type. Saying so is the point of the Sources screen.
-                //
-                // The absence of a newest record decides this, not the trend:
-                // the aggregate API happily returns zero-valued buckets for
-                // days nothing happened, and reading those as data produced
-                // cards that claimed a reading and then had none to show.
-                MetricSummary(descriptor.id, LoadState.Empty, trend = trend)
-            } else {
-                MetricSummary(descriptor.id, LoadState.Loaded, latest, trend)
-            }
-        } catch (cancellation: CancellationException) {
-            // Never swallow cancellation: the dashboard reloads by cancelling
-            // the previous load.
-            throw cancellation
-        } catch (_: SecurityException) {
-            MetricSummary(descriptor.id, LoadState.NotGranted)
-        } catch (_: IllegalStateException) {
-            // How Health Connect reports its rate limit.
-            MetricSummary(descriptor.id, LoadState.Failed(FailureReason.RateLimited))
-        } catch (_: Exception) {
-            MetricSummary(descriptor.id, LoadState.Failed(FailureReason.Unknown))
-        }
-    }
+    override suspend fun readDailyValues(
+        descriptor: MetricDescriptor,
+        from: LocalDate,
+        to: LocalDate,
+    ): Map<LocalDate, Double> = guard { reader?.readDailyValues(descriptor, from, to) }.orEmpty()
 
     override suspend fun loadSleepNight(): SleepNight? {
         val client = client ?: return null
-        if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in granted()) {
-            return null
-        }
+        if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in granted()) return null
+        return guard { SleepReader(client).readLatestNight() }
+    }
+
+    override suspend fun newChangesToken(): String? = guard {
+        val client = client ?: return@guard null
+        client.getChangesToken(
+            ChangesTokenRequest(
+                recordTypes = MetricRegistry.all.mapTo(mutableSetOf()) { it.recordType },
+            ),
+        )
+    }
+
+    override suspend fun pollChanges(token: String): ChangePoll {
+        val client = client ?: return ChangePoll.Unavailable
+        val affected = mutableMapOf<MetricId, LocalDate>()
+        var deletions = false
+        var next = token
+
         return try {
-            SleepReader(client).readLatestNight()
+            var hasMore: Boolean
+            do {
+                val response = client.getChanges(next)
+                if (response.changesTokenExpired) return ChangePoll.TokenExpired
+
+                response.changes.forEach { change ->
+                    when (change) {
+                        is UpsertionChange -> {
+                            val record = change.record
+                            val id = MetricRegistry.idOf(record::class)
+                            if (id != null) {
+                                val day = record.metadata.lastModifiedTime
+                                    .atZone(zone)
+                                    .toLocalDate()
+                                // Keep the earliest day touched: the re-read
+                                // runs from there to today, so a late-arriving
+                                // night is not missed because a newer one
+                                // followed it.
+                                affected[id] = minOf(affected[id] ?: day, day)
+                            }
+                        }
+                        // Only an id arrives, never the type. Nothing useful
+                        // can be inferred, so the caller re-reads the window.
+                        is DeletionChange -> deletions = true
+                    }
+                }
+                next = response.nextChangesToken
+                hasMore = response.hasMore
+            } while (hasMore)
+
+            ChangePoll.Changes(affected, deletions, next)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
-            null
+            ChangePoll.Unavailable
         }
     }
 
@@ -138,5 +160,17 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
         val features = client?.features ?: return false
         return features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_HISTORY) ==
             HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+    }
+
+    /**
+     * One metric failing must not take the whole sync down with it.
+     * Cancellation is rethrown: a reload cancels the previous pass.
+     */
+    private inline fun <T> guard(block: () -> T): T? = try {
+        block()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        null
     }
 }

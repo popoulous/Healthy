@@ -183,4 +183,5 @@
     <string name="overview_more">További típusok</string>
     <string name="header_date">%1$s, %2$s</string>
     <string name="header_subtitle">Íme a mai egészségügyi áttekintésed</string>
+    <string name="window_quarter">90 nap</string>
 </resources>

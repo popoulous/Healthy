@@ -34,8 +34,10 @@ import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.WheelchairPushesRecord
+import androidx.health.connect.client.records.Record
 import hu.galambos.healthy.R
 import java.time.Duration
+import kotlin.reflect.KClass
 
 /**
  * The single source of truth for what this app reads and shows.
@@ -552,4 +554,14 @@ object MetricRegistry {
     /** Everything below the headline, grouped the way the dashboard sections it. */
     val byCategory: Map<MetricCategory, List<MetricDescriptor>> =
         all.groupBy { it.category }
+
+    private val byRecordType: Map<KClass<out Record>, MetricId> =
+        all.associate { it.recordType to it.id }
+
+    /**
+     * Which metric a record belongs to. Used when Health Connect reports a
+     * change: it hands back the record, and the registry is what says which
+     * card that record feeds.
+     */
+    fun idOf(recordType: KClass<out Record>): MetricId? = byRecordType[recordType]
 }
