@@ -38,7 +38,7 @@ class ScaleRecorder(
 ) {
 
     suspend fun record(reading: ScaleReading, settings: Settings) {
-        if (!reading.isComplete) return
+        if (!reading.stabilised) return
 
         val time = reading.instant()
         database.scaleDao().upsert(

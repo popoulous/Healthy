@@ -213,4 +213,5 @@
     <string name="scale_profile_missing">Fill in your height and year of birth above, or only the weight will be recorded.</string>
 
     <string name="source_scale">Mi Body Composition Scale 2</string>
+    <string name="sleep_stage_awake">Awake</string>
 </resources>

@@ -45,6 +45,11 @@ class ScaleViewModel(
 
     private var listenJob: Job? = null
 
+    /** The reading being watched to see whether the scale has finished with it. */
+    private var pending: ScaleReading? = null
+    private var pendingSince = 0L
+    private var lastRecorded: java.time.LocalDateTime? = null
+
     init {
         // Rows recorded while the completion rule was too loose are not
         // measurements — a weight caught mid-step is not a body — so they are
@@ -67,22 +72,45 @@ class ScaleViewModel(
             scanner.readings().collect { reading ->
                 _state.update { it.copy(live = reading) }
 
-                // The impedance is what marks the end of a weigh-in, and
-                // nothing else does. The "stabilised" flag is set on
-                // transitional readings too: loosening the rule to trust it
-                // recorded twenty-three rows from one weigh-in, ending with
-                // 3.25 kg — the instant of stepping off, filed as a body
-                // weight. The impedance appeared exactly twice in that run,
-                // both times on the real 95.1 kg reading.
-                if (reading.isComplete) {
-                    // Storing is keyed by the measurement's own timestamp, so
-                    // the scale repeating its last result costs nothing and a
-                    // second weigh-in is a second record.
+                if (shouldRecord(reading)) {
+                    lastRecorded = reading.measuredAt
                     recorder.record(reading, settings.settings.first())
                     _state.update { it.copy(recorded = reading) }
                 }
             }
         }
+    }
+
+    /**
+     * Whether this advertisement is a finished weigh-in.
+     *
+     * Neither flag in the packet answers that. "Stabilised" is set on readings
+     * that are still moving — trusting it filed the instant of stepping off,
+     * 3.25 kg, as a body weight — and the documented impedance flag is never
+     * set at all. But the scale's own timestamp does answer it: while someone
+     * is getting on, it advances every second, and when the measurement is
+     * done it freezes and the same packet repeats.
+     *
+     * So an impedance is taken as done immediately, since it only ever arrives
+     * at the end. Otherwise the reading has to hold still — same timestamp,
+     * repeated — which is what a weigh-in in socks looks like: a real weight,
+     * no body composition.
+     */
+    private fun shouldRecord(reading: ScaleReading): Boolean {
+        if (!reading.stabilised) {
+            pending = null
+            return false
+        }
+        if (reading.measuredAt == lastRecorded) return false
+        if (reading.isComplete) return true
+
+        val now = System.currentTimeMillis()
+        if (pending?.measuredAt != reading.measuredAt) {
+            pending = reading
+            pendingSince = now
+            return false
+        }
+        return now - pendingSince >= SETTLED_HOLD_MS
     }
 
     fun stopListening() {
@@ -106,6 +134,12 @@ class ScaleViewModel(
     }
 
     companion object {
+        /**
+         * How long a reading must stop changing before it counts. The scale
+         * re-broadcasts every second or two, so this is a couple of repeats.
+         */
+        private const val SETTLED_HOLD_MS = 2_500L
+
         fun factory(
             scanner: ScaleScanner,
             recorder: ScaleRecorder,

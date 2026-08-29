@@ -204,4 +204,5 @@
     <string name="scale_profile_missing">Töltsd ki fent a magasságot és a születési évet, különben csak a súly rögzül.</string>
 
     <string name="source_scale">Mi Body Composition Scale 2</string>
+    <string name="sleep_stage_awake">Ébren</string>
 </resources>

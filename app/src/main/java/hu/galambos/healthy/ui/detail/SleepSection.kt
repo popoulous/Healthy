@@ -61,7 +61,7 @@ fun SleepSection(night: SleepNight, modifier: Modifier = Modifier) {
             night = night,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp),
+                .height(140.dp),
         )
 
         Row(
