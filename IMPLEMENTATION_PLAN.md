@@ -12,9 +12,10 @@
 > helyi tárolás inkrementális szinkronnal (§16) is kész — utóbbi visszavonta a
 > §2 „nincs adatbázis" döntését, indoklással.
 >
-> **Ami még nincs ellenőrizve valódi eszközön:** az alvásfázisok megléte és a
-> mérleg rádiós olvasása. Mindkettő a 17T Prón és a mérlegen dől el; a kód
-> mindkét kimenetelt kezeli.
+> **Valódi eszközön igazolva (2026-08-29, Xiaomi 17T Pro + Mi Body Composition
+> Scale 2):** az alvásfázisok megvannak (39 szegmens, könnyű/mély/REM), és a
+> mérleg BLE-olvasása végigmegy a nyers bájtoktól a testösszetételig. A
+> részleteket a 17. szakasz írja le.
 
 ---
 
@@ -617,3 +618,41 @@ A Room az **F9**-ben érkezik (§15.4), egyszerre a mérleg méréseivel, a napi
 bucketekkel és a changes-token alapú szinkronnal — nem érdemes kétszer
 hozzányúlni ugyanahhoz a réteghez. Utána jön a hosszabb időablak, ami innentől
 olcsó.
+
+---
+
+## 17. Amit a valódi eszköz megtanított
+
+A 17T Pro és a mérleg négy hibát hozott elő, amit sem a fordító, sem a tesztek
+nem találhattak meg. Mind a négy abból fakadt, hogy **dokumentációt hittem el
+hardver helyett**.
+
+| Amit hittem | Amit a hardver mondott |
+|---|---|
+| A 14-es bit jelzi, hogy az impedancia kész | A bit végig 0, az impedancia (419 Ω) közben ott van. Erre a feltételre kötve **soha semmit nem rögzítettünk volna**. |
+| A mérleg helyi időt küld | UTC-t küld. Két órával korábbra datáltunk minden mérést. |
+| A „stabilizálódott" bit végleges mérést jelent | Átmeneti értékeknél is be van állítva. Egy mérésből 23 sor lett, a végén 3,25 kg-mal — a lelépés pillanata, testsúlyként. |
+| Elég a változás-API-ra bízni a frissítést | Igen, de a *kézi* frissítésre nem: aki megnyomja, épp azt gyanítja, hogy állott az adat. |
+
+**Az impedancia a mérés egyetlen megbízható végjele.** A naplóban egy teljes
+mérési sorozatban pontosan kétszer jelent meg, mindkétszer a valódi 95,1 kg-nál.
+A rögzítés feltétele ez lett; a valódi hirdetés bekerült regressziós tesztnek.
+
+**Egy ötödik hiba a tárolóban lapult:** két forrás ugyanarra a metrikára
+(mérleg + Health Connect), és az nyert, amelyik később írt. Mivel a szinkron a
+mérleg után fut, a friss súlyt minden előtérbe hozáskor felülírta egy régebbi.
+Mostantól a *valóban legfrissebb* nyer.
+
+### 17.1 Amit a Health Connectről megtudtunk
+
+- **Testzsír nincs benne.** A brief állítása igazolva; a mérleg BLE-olvasása
+  az egyetlen út. Most már ez adja a testzsírt, izomtömeget, testvizet,
+  csonttömeget és az alapanyagcserét.
+- **A Mi Fitness típusonként válogat.** Ugyanazon a napon beírta az alvást
+  (06:02), a véroxigént (08:03) és az aktív kalóriát (10:29) — a **pulzust
+  viszont három napja nem**, miközben a saját appjában percre friss. Nem
+  engedély és nem hiba: a forrás dönt. Pontosan ezért van Források fül.
+- **Az óra adata alig pár napra megy vissza** a Health Connectben, miközben a
+  Google Fit származtatott metrikái 366 napot adtak. Ettől lett igazán értelme
+  a helyi archívumnak: amit ma beolvasunk, azt megőrizzük, miután a Health
+  Connect már elfelejtette.
