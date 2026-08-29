@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FilterChip
@@ -23,9 +24,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.BuildConfig
@@ -259,16 +262,26 @@ private fun NumberField(
         }
     }
 
+    // Committed when the field is left or Done is pressed, not on every
+    // keystroke. Each commit writes to storage, re-emits the settings and
+    // re-derives the scale history; doing that per character made the whole
+    // screen stutter as it was typed into.
+    val commit = {
+        val parsed = text.toIntOrNull() ?: 0
+        if (parsed != value) onChange(parsed)
+    }
+
     OutlinedTextField(
         value = text,
-        onValueChange = { typed ->
-            text = typed.filter { it.isDigit() }.take(4)
-            onChange(text.toIntOrNull() ?: 0)
-        },
+        onValueChange = { typed -> text = typed.filter { it.isDigit() }.take(4) },
         label = { Text(label) },
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = modifier,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done,
+        ),
+        keyboardActions = KeyboardActions(onDone = { commit() }),
+        modifier = modifier.onFocusChanged { if (!it.isFocused) commit() },
     )
 }
 
@@ -286,15 +299,16 @@ private fun TextField(
         if (text.trim() != value) text = value
     }
 
+    val commit = { if (text.trim() != value) onChange(text) }
+
     OutlinedTextField(
         value = text,
-        onValueChange = {
-            text = it
-            onChange(it)
-        },
+        onValueChange = { text = it },
         label = { Text(label) },
         singleLine = true,
-        modifier = modifier,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { commit() }),
+        modifier = modifier.onFocusChanged { if (!it.isFocused) commit() },
     )
 }
 

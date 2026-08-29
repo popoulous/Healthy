@@ -60,10 +60,11 @@ class ScaleViewModel(
             scanner.readings().collect { reading ->
                 _state.update { it.copy(live = reading) }
 
-                // A weigh-in is finished when the weight has settled and the
-                // impedance has arrived. Anything earlier is a number on its
-                // way somewhere.
-                if (reading.isComplete) {
+                // A settled weight is a weigh-in, with or without an
+                // impedance. Requiring both meant a measurement taken in socks
+                // recorded nothing at all — losing the weight as well as the
+                // composition, when only the composition was ever in doubt.
+                if (reading.stabilised) {
                     // Storing is keyed by the measurement's own timestamp, so
                     // the scale repeating its last result costs nothing and a
                     // second weigh-in is a second record.

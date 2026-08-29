@@ -14,6 +14,8 @@ import hu.galambos.healthy.domain.summary.DataPoint
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 /** Marks a reading as this app's own work rather than another app's record. */
 const val SCALE_SOURCE = "healthy.scale"
@@ -35,7 +37,7 @@ class ScaleRecorder(
     suspend fun record(reading: ScaleReading, settings: Settings) {
         if (!reading.stabilised) return
 
-        val time = reading.measuredAt.atZone(zone).toInstant()
+        val time = reading.instant()
         database.scaleDao().upsert(
             ScaleMeasurementEntity(
                 timeEpochMillis = time.toEpochMilli(),
@@ -96,6 +98,27 @@ class ScaleRecorder(
             )
         }
     }
+}
+
+/**
+ * The scale sends its clock in UTC, not in local time.
+ *
+ * Measured, not assumed: a weigh-in logged at 14:08 local arrived carrying
+ * 12:08, and Budapest was two hours ahead of UTC that day. Reading it as local
+ * time and converting again put every measurement two hours into the past.
+ *
+ * The scale's clock is set by whichever app last paired with it, and with Zepp
+ * Life gone nothing will correct it again. So a timestamp that lands in the
+ * future or more than a day back is not trusted, and the moment of reception
+ * is used instead — a weigh-in dated by a drifting clock is worse than one
+ * dated a few seconds late.
+ */
+private fun ScaleReading.instant(): Instant {
+    val fromScale = measuredAt.toInstant(ZoneOffset.UTC)
+    val now = Instant.now()
+    val plausible = fromScale <= now.plusSeconds(60) &&
+        fromScale >= now.minus(1, ChronoUnit.DAYS)
+    return if (plausible) fromScale else now
 }
 
 private fun Settings.toProfile(): BodyProfile? {

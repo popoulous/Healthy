@@ -52,7 +52,6 @@ object ScaleAdvertisement {
     private const val FLAG_LOAD_REMOVED = 1 shl 8
     private const val FLAG_CATTY = 1 shl 9
     private const val FLAG_WEIGHT_STABILISED = 1 shl 10
-    private const val FLAG_IMPEDANCE_STABILISED = 1 shl 14
 
     private const val RAW_PER_KG = 200.0
     private const val RAW_PER_LB = 100.0
@@ -61,8 +60,17 @@ object ScaleAdvertisement {
     private const val KG_PER_CATTY = 0.5
 
     /**
-     * Impedance outside this band is the scale still deciding, not a body.
-     * Values of zero are common while a measurement is in progress.
+     * Whether an impedance arrived is decided by the value, not by a flag.
+     *
+     * The community documentation names bit 14 as "impedance stabilised", and
+     * on the actual scale that bit stays clear while a perfectly good
+     * impedance sits in bytes 9 and 10 — verified against a real weigh-in:
+     * `02A6EA07081D0B3915A3011A4A` carries 419 ohms with bit 14 unset. Gating
+     * on the documented flag meant no measurement was ever recorded.
+     *
+     * The band is the gate instead. Zero is what arrives mid-measurement and
+     * through socks; a human body between two bare feet lands inside this
+     * range, and anything outside it is the scale still deciding.
      */
     private val PLAUSIBLE_IMPEDANCE = 100..3000
 
@@ -93,9 +101,7 @@ object ScaleAdvertisement {
         return ScaleReading(
             measuredAt = measuredAt,
             weightKg = weightKg,
-            impedanceOhms = rawImpedance.takeIf {
-                flags and FLAG_IMPEDANCE_STABILISED != 0 && it in PLAUSIBLE_IMPEDANCE
-            },
+            impedanceOhms = rawImpedance.takeIf { it in PLAUSIBLE_IMPEDANCE },
             stabilised = flags and FLAG_WEIGHT_STABILISED != 0,
             loadRemoved = flags and FLAG_LOAD_REMOVED != 0,
         )

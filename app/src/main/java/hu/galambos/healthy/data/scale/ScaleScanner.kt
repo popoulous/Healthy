@@ -95,8 +95,23 @@ class ScaleScanner(private val context: Context) {
                     }
                     return
                 }
-                if (BuildConfig.DEBUG) Log.d(TAG, "scale payload ${payload.size} bytes")
-                ScaleAdvertisement.parse(payload)?.let { trySend(it) }
+                val parsed = ScaleAdvertisement.parse(payload)
+                if (BuildConfig.DEBUG) {
+                    // The bytes as they actually arrive. The layout is
+                    // documented by the community rather than by Xiaomi, and
+                    // a measurement that never records is exactly the symptom
+                    // of a flag bit sitting somewhere else than expected.
+                    Log.d(
+                        TAG,
+                        "payload=${payload.joinToString("") { "%02X".format(it) }} " +
+                            "flags=%04X".format(
+                                (payload[0].toInt() and 0xFF) or
+                                    ((payload[1].toInt() and 0xFF) shl 8),
+                            ) +
+                            " parsed=$parsed",
+                    )
+                }
+                parsed?.let { trySend(it) }
             }
 
             override fun onScanFailed(errorCode: Int) {

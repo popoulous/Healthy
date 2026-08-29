@@ -41,7 +41,6 @@ class ScaleAdvertisementTest {
     )
 
     private val stabilised = 1 shl 10
-    private val impedanceReady = 1 shl 14
     private val lbs = 1 shl 7
     private val catty = 1 shl 9
     private val loadRemoved = 1 shl 8
@@ -90,16 +89,6 @@ class ScaleAdvertisementTest {
         assertFalse(reading.isComplete)
     }
 
-    @Test
-    fun `impedance is ignored until the scale says it settled`() {
-        val reading = ScaleAdvertisement.parse(
-            payload(stabilised, impedance = 500, rawWeight = 15840),
-        )!!
-
-        assertNull(reading.impedanceOhms)
-        assertFalse(reading.isComplete)
-    }
-
     /**
      * Standing on the scale in socks gives a weight and no impedance at all.
      * That is a valid weigh-in with no body composition, not a broken one.
@@ -107,7 +96,7 @@ class ScaleAdvertisementTest {
     @Test
     fun `zero impedance is not a body`() {
         val reading = ScaleAdvertisement.parse(
-            payload(stabilised or impedanceReady, impedance = 0, rawWeight = 15840),
+            payload(stabilised, impedance = 0, rawWeight = 15840),
         )!!
 
         assertNull(reading.impedanceOhms)
@@ -115,15 +104,47 @@ class ScaleAdvertisementTest {
     }
 
     @Test
+    fun `an implausible impedance is not a body either`() {
+        val reading = ScaleAdvertisement.parse(
+            payload(stabilised, impedance = 9000, rawWeight = 15840),
+        )!!
+
+        assertNull(reading.impedanceOhms)
+    }
+
+    @Test
     fun `a settled measurement carries both weight and impedance`() {
         val reading = ScaleAdvertisement.parse(
-            payload(stabilised or impedanceReady, impedance = 512, rawWeight = 15840),
+            payload(stabilised, impedance = 512, rawWeight = 15840),
         )!!
 
         assertTrue(reading.isComplete)
         assertEquals(512, reading.impedanceOhms)
         assertEquals(79.2, reading.weightKg, 0.001)
     }
+
+    /**
+     * Captured from the actual scale. The documentation says bit 14 marks the
+     * impedance as ready; this advertisement carries 419 ohms with that bit
+     * clear, which is why the app recorded nothing until the flag stopped
+     * being the gate. Kept verbatim so the layout cannot drift back.
+     */
+    @Test
+    fun `a real advertisement from the scale decodes completely`() {
+        val captured = "02A6EA07081D0B3915A3011A4A".hexToBytes()
+
+        val reading = ScaleAdvertisement.parse(captured)!!
+
+        assertEquals(LocalDateTime.of(2026, 8, 29, 11, 57, 21), reading.measuredAt)
+        assertEquals(94.85, reading.weightKg, 0.001)
+        assertEquals(419, reading.impedanceOhms)
+        assertTrue(reading.stabilised)
+        assertFalse(reading.loadRemoved)
+        assertTrue(reading.isComplete)
+    }
+
+    private fun String.hexToBytes(): ByteArray =
+        chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
     @Test
     fun `stepping off is reported and is not a measurement`() {

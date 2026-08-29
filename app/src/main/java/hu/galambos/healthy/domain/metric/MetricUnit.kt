@@ -10,7 +10,9 @@ enum class MetricUnit(val decimals: Int) {
     Steps(0),
     Bpm(0),
     Percent(0),
-    Kilograms(1),
+    // The scale reports in five-gram steps, so a tenth would round away a
+    // digit that was actually measured.
+    Kilograms(2),
     Kilocalories(0),
     Hours(1),
     Meters(0),
