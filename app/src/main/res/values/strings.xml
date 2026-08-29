@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Healthy</string>
+
+    <string name="tab_overview">Overview</string>
+    <string name="tab_trends">Trends</string>
+    <string name="tab_sources">Sources</string>
+    <string name="tab_settings">Settings</string>
+
+    <string name="rationale_title">Your health data stays here</string>
+    <string name="rationale_body">Healthy reads your health and fitness data from Health Connect and shows it on one dashboard. It reads only — it never writes anything back. Nothing is uploaded, there is no account, no cloud and no analytics: the data never leaves this phone.</string>
+</resources>

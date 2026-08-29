@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?android:attr/colorControlNormal">
+    <!-- Sliders rather than a gear: this app has settings, not machinery. -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,7 L8,7 L8,9 L3,9 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M9,5 L12,5 L12,11 L9,11 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M13,7 L21,7 L21,9 L13,9 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,15 L12,15 L12,17 L3,17 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M13,13 L16,13 L16,19 L13,19 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M17,15 L21,15 L21,17 L17,17 Z" />
+</vector>

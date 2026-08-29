@@ -171,8 +171,15 @@ engedélyed, de nincs adat" a felhasználónak két különböző üzenet, és a
    függőségből ellenőrizve. Ha nincs meg, a UI jelzi, hogy 30 napnál régebbre
    nem lát.
 
+**Mérve, nem becsülve (F0):** a `connect-client` 1.1.0 AAR-jából kiolvasva a
+62 rekordtípus **38 olvasási engedélyre** képződik le — több típus osztozik
+egy engedélyen. A cikluskövetés öt engedélyét elhagyva **33 marad**, a
+history-engedéllyel 34. Az F3 tehát lényegesen kisebb, mint az „ötvenvalahány
+engedély" becslés sugallta. A teljes lista bármikor újra kinyerhető az AAR-ból,
+ezért nem másoljuk ide.
+
 A manifestbe kell: `<queries>` a `com.google.android.apps.healthdata`
-csomagra, az ~55 `android.permission.health.READ_*` deklaráció, a
+csomagra, a 33 `android.permission.health.READ_*` deklaráció, a
 history-engedély, és a `ViewPermissionUsageActivity` activity-alias
 (`android.permission.START_VIEW_PERMISSION_USAGE`, `VIEW_PERMISSION_USAGE`
 action, `HEALTH_PERMISSIONS` kategória). Az alias mögötti activity a privacy
@@ -304,7 +311,7 @@ A képernyő tehát a betöltött adatokból épül, nem egy előre ismert tábl
 Két képernyő az engedélykérés előtt (`design.txt` 10.): mit csinál az app
 (privát / a te eszközödön / csak olvas), majd mit fog olvasni. Ez nem
 kozmetika — a Health Connect engedélyképernyője önmagában nem magyarázza meg,
-miért kér ötvenvalahány engedélyt egy dashboard.
+miért kér harmincvalahány engedélyt egy dashboard.
 
 ### 7.7 Alvás-részletek — a Mi Fitness képernyő rekonstrukciója
 

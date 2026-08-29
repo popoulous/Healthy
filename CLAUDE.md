@@ -19,8 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - The product brief lives in `health-connect-dashboard-brief.md`, the visual
   direction in `design.txt` (authoritative) and `docs/design-mockup.png`
   (illustration); the plan and the reasoning behind every decision live in
-  `IMPLEMENTATION_PLAN.md`.
-  Read both before planning. The plan deliberately overrides the brief in
+  `IMPLEMENTATION_PLAN.md`. Read them before planning. The plan deliberately overrides the brief in
   places (minSdk, scope) — the plan wins, and §2 says why.
 - Keep this file concise; record project-level decisions in memory.
 - The developer is experienced (13+ years) — skip Kotlin/Android basics,
@@ -41,7 +40,7 @@ into one screen. See the brief for the metric list.
 ## Stack (see IMPLEMENTATION_PLAN.md §3 for pinned versions)
 - Kotlin, Jetpack Compose Material 3, single Gradle module.
 - `androidx.health.connect:connect-client` 1.1.0 stable — not the 1.2.0 alphas.
-- Package id `hu.galambos.healthy`. minSdk 34, compile/target 36.
+- Package id `hu.galambos.healthy`. minSdk 34, compileSdk 37, targetSdk 36.
 - DataStore Preferences for settings. **No database** — Health Connect is the
   database; a local mirror would only buy a cache-invalidation problem.
 - No server component, no DI framework, no chart library (Compose `Canvas`).
@@ -79,9 +78,27 @@ requested on first run — see IMPLEMENTATION_PLAN.md §5.
 - Remote: https://github.com/popoulous/Healthy.git (public — the history is
   part of the work product).
 
+## Build
+
+Set `JAVA_HOME` first — the JDK on PATH is 26, which AGP rejects:
+
+```powershell
+$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat assembleDebug          # debug APK
+.\gradlew.bat lintDebug              # lint; warningsAsErrors is on
+.\gradlew.bat clean lintDebug assembleDebug
+```
+
+There are no tests yet — they arrive in F2 with the first repository. The
+debug APK lands in `app/build/outputs/apk/debug/`; install it with the SDK's
+own `adb` (`%LOCALAPPDATA%/Android/Sdk/platform-tools/adb.exe install -r`),
+which is not on PATH.
+
+Gradle 9.7.1 via the wrapper; AGP 9.3.2 with built-in Kotlin, so **never apply
+`org.jetbrains.kotlin.android`** — the Kotlin version is raised through the
+root `buildscript` classpath instead.
+
 ## Not decided yet (ask, don't assume)
 - Whether the project stays under `C:\xampp\htdocs` or moves out of the
   XAMPP web root.
-- The four items in IMPLEMENTATION_PLAN.md §11.
-- Build/lint/test commands: no Gradle project exists yet. Fill this file's
-  command section in once the scaffold is generated — do not invent them.
+- The three items in IMPLEMENTATION_PLAN.md §11.

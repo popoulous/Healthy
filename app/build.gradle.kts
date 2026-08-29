@@ -1,0 +1,70 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.compiler)
+}
+
+android {
+    namespace = "hu.galambos.healthy"
+    // Compose 1.12+ requires compileSdk 37; the phone runs Android 16, so the
+    // app targets 36 until 37 behaviour can actually be tested on a device.
+    compileSdk = 37
+
+    defaultConfig {
+        applicationId = "hu.galambos.healthy"
+        minSdk = 34
+        targetSdk = 36
+        versionCode = 1
+        versionName = "0.1.0"
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    lint {
+        warningsAsErrors = true
+        // targetSdk deliberately trails compileSdk: the phone runs Android 16,
+        // so targeting 37 would ship behaviour changes nobody can test here.
+        disable += "OldTargetApi"
+        // "A newer AGP exists" is news, not a defect. Upgrading is a decision,
+        // and it should not be forced by a build that fails the day a release
+        // lands.
+        disable += "AndroidGradlePluginVersion"
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
+dependencies {
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Not used until F1, but pulled in now so the dependency is proven to resolve.
+    implementation(libs.androidx.health.connect.client)
+}
