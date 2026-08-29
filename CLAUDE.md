@@ -52,10 +52,13 @@ including these.
 - Package id `hu.galambos.healthy`. **minSdk 28**, compileSdk 37, targetSdk 36.
   The floor is 28, not 34, because the app also has to run on a Galaxy A71
   that stops at Android 13 — so the pre-Android-14 paths must stay working.
-- DataStore Preferences for settings. Health Connect data is **never** mirrored
-  locally — it is the database, and a copy would only buy a cache to
-  invalidate. Room exists solely for scale measurements, which have no Health
-  Connect home at all (IMPLEMENTATION_PLAN.md §15).
+- DataStore Preferences for settings; Room for what has to outlive a read.
+- **Raw Health Connect records are never copied.** Health Connect is their
+  database. What Room holds is what it cannot: scale measurements, which have
+  no Health Connect home at all, and daily buckets, which are an archive of
+  already-summarised values that survives Health Connect's own auto-delete
+  (IMPLEMENTATION_PLAN.md §15–16). Buckets are upserted by metric and date, so
+  a re-read corrects a day rather than needing a cache invalidated.
 - No server component, no DI framework, no chart library (Compose `Canvas`),
   no navigation library — four flat tabs and one detail level are a nullable
   id and `BackHandler`. Adding a dependency needs a reason; the short list is
