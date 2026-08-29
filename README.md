@@ -18,7 +18,7 @@ Healthy reads the store and puts it in one place.
 - Shows each metric's newest reading with **the app that wrote it and when**,
   because a number without a source is not much use when four apps feed the
   same store.
-- Draws a **7 or 30 day trend** per metric, and a detail screen with the range,
+- Draws a **7, 30 or 90 day trend** per metric, and a detail screen with the range,
   the mean, and how the latest reading sits against it.
 - Gives sleep its own screen: a hypnogram, the stage breakdown against clinical
   reference bands, the heart rate, blood oxygen and respiration recorded during

@@ -7,8 +7,14 @@
 > A briefhez képest több ponton eltér — ezek az eltérések a 2. szakaszban,
 > indoklással.
 >
-> **Állapot (2026-08-29): az F0–F6 elkészült.** Amit a megvalósítás
-> felülírt a tervhez képest, azt a 13. szakasz sorolja.
+> **Állapot (2026-08-29): az F0–F9 elkészült.** Amit a megvalósítás felülírt a
+> tervhez képest, azt a 13. szakasz sorolja. A mérleg BLE-olvasása (§15) és a
+> helyi tárolás inkrementális szinkronnal (§16) is kész — utóbbi visszavonta a
+> §2 „nincs adatbázis" döntését, indoklással.
+>
+> **Ami még nincs ellenőrizve valódi eszközön:** az alvásfázisok megléte és a
+> mérleg rádiós olvasása. Mindkettő a 17T Prón és a mérlegen dől el; a kód
+> mindkét kimenetelt kezeli.
 
 ---
 
