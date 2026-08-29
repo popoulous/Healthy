@@ -11,9 +11,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,6 +43,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
     state: DashboardState,
@@ -48,15 +51,21 @@ fun OverviewScreen(
     modifier: Modifier = Modifier,
     onGrantRequested: (() -> Unit)? = null,
     onMetricClick: (MetricId) -> Unit = {},
+    onRefresh: () -> Unit = {},
 ) {
     // Most of the thirty-odd types are empty on any given phone. Hiding them
     // keeps the dashboard the design asked for; the toggle is there because
     // "what does this phone not have" is a real question too.
     var showEmpty by rememberSaveable { mutableStateOf(false) }
 
+    PullToRefreshBox(
+        isRefreshing = state.loading,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize(),
+    ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -109,6 +118,7 @@ fun OverviewScreen(
                 )
             }
         }
+    }
     }
 }
 

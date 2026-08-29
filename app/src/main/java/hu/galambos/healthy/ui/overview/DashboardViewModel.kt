@@ -8,10 +8,12 @@ import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.sleep.SleepNight
+import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
 import hu.galambos.healthy.domain.summary.TrendWindow
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -66,7 +68,16 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
             // which reads better than a long blank wait, and it keeps the
             // request rate well under the limit.
             for (descriptor in MetricRegistry.all) {
-                val summary = repository.loadSummary(descriptor, window)
+                var summary = repository.loadSummary(descriptor, window)
+
+                // Health Connect rate-limits reads. One backoff is enough:
+                // the limit is short-lived, and a metric that fails twice is
+                // better shown as failed than retried into the ground.
+                if (summary.state == LoadState.Failed(FailureReason.RateLimited)) {
+                    delay(RATE_LIMIT_BACKOFF_MS)
+                    summary = repository.loadSummary(descriptor, window)
+                }
+
                 _state.update { it.copy(summaries = it.summaries + (descriptor.id to summary)) }
             }
             _state.update { it.copy(loading = false) }
@@ -90,6 +101,7 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
 
     companion object {
         private const val MIN_RELOAD_INTERVAL_MS = 60_000L
+        private const val RATE_LIMIT_BACKOFF_MS = 1_500L
 
         fun factory(repository: HealthRepository) = viewModelFactory {
             initializer { DashboardViewModel(repository) }

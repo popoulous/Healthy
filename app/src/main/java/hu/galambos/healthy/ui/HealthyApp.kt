@@ -124,6 +124,7 @@ fun HealthyApp(
                 modifier = contentModifier,
                 onGrantRequested = onGrantRequested,
                 onMetricClick = openDetail,
+                onRefresh = onRefresh,
             )
 
             Destination.Trends -> TrendsScreen(

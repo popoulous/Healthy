@@ -1,11 +1,14 @@
-# Healthy — implementációs terv (v0.3, jóváhagyásra vár)
+# Healthy — implementációs terv (v0.4 — az MVP elkészült)
 
 > Termék-brief: `health-connect-dashboard-brief.md`. Design: `design.txt`
 > (szöveges irány — ez a mérvadó) és `docs/design-mockup.png` (makett).
 > Munkaszabályok: `CLAUDE.md`.
 > Ez a dokumentum a **hogyan**-t rögzíti, és a döntések mögötti indoklást.
 > A briefhez képest több ponton eltér — ezek az eltérések a 2. szakaszban,
-> indoklással. Kód csak ennek jóváhagyása után készül.
+> indoklással.
+>
+> **Állapot (2026-08-29): az F0–F6 elkészült.** Amit a megvalósítás
+> felülírt a tervhez képest, azt a 13. szakasz sorolja.
 
 ---
 
@@ -425,3 +428,40 @@ A terv jóváhagyása után **F0**: Gradle projekt-váz generálása,
 `hu.galambos.healthy` package, a manifest engedély-deklarációkkal, és egy üres
 dashboard, ami elindul a telefonon. Ez után a `CLAUDE.md` parancs-szekciója
 kitölthető valódi, ellenőrzött build-parancsokkal.
+
+---
+
+## 13. Amit a megvalósítás felülírt
+
+A terv jó volt, de öt ponton a valóság mást mondott. Ezek nem elfelejtett
+döntések, hanem kijavítottak — itt maradnak, hogy ne kelljen újra végigmenni
+rajtuk.
+
+| Terv | Valóság | Miért |
+|---|---|---|
+| **minSdk 34** | **28** | Az A71 Android 13-on áll meg, és azon is futnia kell. Visszajött a „Health Connect nincs telepítve" ág és a régi rationale-intent is — és mindkettő azonnal élesben tesztelhető lett, mert az A71-en tényleg nem volt telepítve. |
+| Gradle 9.5 | **9.7.1** | A 9.5 nem létező disztribúció; az AGP táblázata minimumot ír, nem kiadást. |
+| `NavHost` | **nullable id + BackHandler** | Négy lapos fül és egy részletszint. A navigációs könyvtár egy verifikálatlan verziószám lett volna nulla haszonért. |
+| `Icons.Filled.*` | **saját vektor ikonok** | A Compose már nem hozza a Material ikonkészletet. |
+| ~55 engedély | **31 olvasási engedély** | A 62 rekordtípus 31 engedélyre képződik le; több típus osztozik egyen. Az AAR-ból kiolvasva, nem becsülve. |
+
+**Az alvás-fázisok kockázata (7.7) még nyitva van.** Az A71-en nincs óra, tehát
+nem derült ki, hogy a Mi Fitness beírja-e a fázisokat a Health Connectbe. A
+kód mindkét esetet kezeli: fázisok nélkül csak időtartam látszik, pontszám
+nélkül, és a képernyő megmondja, miért. Ez a 14T Prón dől el.
+
+**Amit a telefon talált meg, nem a fordító:**
+- Az engedély-cache versenyhelyzete: a dashboard ugyanabban a pillanatban
+  indult, mint az engedély-ellenőrzés, és az üres cache-t válasznak vettük —
+  minden kártya „nincs engedély"-t mutatott. A cache most nullable: a „még nem
+  kérdeztük" más, mint a „semmi nincs engedélyezve".
+- Az aggregate API nulla értékű bucketeket ad olyan napokra, amikor nem
+  történt semmi. Ettől egy kártya adatot ígért, majd nem volt mit mutatnia.
+  Most a legfrissebb rekord megléte dönti el, van-e adat.
+
+## 14. Ami az MVP-ből tudatosan kimaradt
+
+Háttérolvasás és widget (v2, `READ_HEALTH_DATA_IN_BACKGROUND` kell hozzá).
+90 napos ablak. Adat-export. Aláírt release build. Grafikonok animációja a
+betöltéskori fade-en túl. Instrumentált tesztek — az emulátoron nincs mit
+olvasni, a valódi ellenőrzés a telefonon történik.
