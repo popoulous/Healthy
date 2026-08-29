@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Healthy</string>
+    <!-- A brand name, the same in every language. -->
+    <string name="app_name" translatable="false">Healthy</string>
 
     <string name="tab_overview">Overview</string>
     <string name="tab_trends">Trends</string>
@@ -9,4 +10,49 @@
 
     <string name="rationale_title">Your health data stays here</string>
     <string name="rationale_body">Healthy reads your health and fitness data from Health Connect and shows it on one dashboard. It reads only — it never writes anything back. Nothing is uploaded, there is no account, no cloud and no analytics: the data never leaves this phone.</string>
+
+    <!-- Categories -->
+    <string name="category_activity">Activity</string>
+    <string name="category_body">Body</string>
+    <string name="category_vitals">Vitals</string>
+    <string name="category_sleep">Sleep</string>
+    <string name="category_nutrition">Nutrition</string>
+    <string name="category_wellness">Wellness</string>
+
+    <!-- Metrics -->
+    <string name="metric_steps">Steps</string>
+    <string name="metric_heart_rate">Heart rate</string>
+    <string name="metric_sleep">Sleep</string>
+    <string name="metric_oxygen_saturation">Blood oxygen</string>
+    <string name="metric_active_calories">Active calories</string>
+    <string name="metric_total_calories">Total calories</string>
+    <string name="metric_weight">Weight</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_intro_title">Your health data.\nIn one place.</string>
+    <string name="onboarding_intro_body">Your watch and your scale write to Health Connect through different apps, and no app shows you both. Healthy reads the lot and puts it on one screen.</string>
+    <string name="onboarding_point_private">Private</string>
+    <string name="onboarding_point_private_detail">No account, no cloud, no analytics.</string>
+    <string name="onboarding_point_device">On your device</string>
+    <string name="onboarding_point_device_detail">The data never leaves this phone.</string>
+    <string name="onboarding_point_read_only">Read-only</string>
+    <string name="onboarding_point_read_only_detail">Healthy never writes to Health Connect.</string>
+    <string name="onboarding_continue">Continue</string>
+
+    <string name="onboarding_permissions_title">Allow access</string>
+    <string name="onboarding_permissions_body">Health Connect will ask which of these Healthy may read. You can allow some and refuse others — anything you refuse is simply left off the dashboard.</string>
+    <string name="onboarding_permissions_history">This phone can also grant access to data older than 30 days. Without it, Healthy sees only the last month of anything your watch or scale wrote.</string>
+    <string name="onboarding_permissions_history_unsupported">This phone\'s Health Connect cannot grant access beyond 30 days, so Healthy will show the last month only.</string>
+    <string name="onboarding_grant">Grant permissions</string>
+    <string name="onboarding_back">Back</string>
+
+    <!-- Health Connect availability -->
+    <string name="unavailable_title">Health Connect is missing</string>
+    <string name="unavailable_body">Healthy has nothing to read without it. Health Connect is the phone\'s own store for health data — installing it does not send anything anywhere.</string>
+    <string name="unavailable_install">Install Health Connect</string>
+    <string name="update_required_title">Health Connect needs updating</string>
+    <string name="update_required_body">The version on this phone is older than the one Healthy reads through.</string>
+    <string name="update_required_update">Update Health Connect</string>
+    <string name="unavailable_no_store">No app store on this device to install it from.</string>
+    <string name="retry">Try again</string>
 </resources>

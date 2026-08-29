@@ -11,7 +11,11 @@ android {
 
     defaultConfig {
         applicationId = "hu.galambos.healthy"
-        minSdk = 34
+        // Android 9 is the floor for the Health Connect app itself. The old
+        // Galaxy A71 tops out at Android 13, and the app has to run there too,
+        // so the pre-Android-14 paths stay in: Health Connect as an installable
+        // app, and no history permission.
+        minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
@@ -45,6 +49,10 @@ android {
         // and it should not be forced by a build that fails the day a release
         // lands.
         disable += "AndroidGradlePluginVersion"
+        // Same reasoning for library versions: a dependency bump is a decision
+        // to make and test, not something a passing build should demand the
+        // day upstream publishes.
+        disable += "GradleDependency"
     }
 }
 
@@ -65,6 +73,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Not used until F1, but pulled in now so the dependency is proven to resolve.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     implementation(libs.androidx.health.connect.client)
 }

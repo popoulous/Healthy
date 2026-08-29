@@ -15,7 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.ui.components.PlaceholderScreen
 import hu.galambos.healthy.ui.theme.HealthyTheme
-import hu.galambos.healthy.ui.theme.MetricAccent
+import hu.galambos.healthy.ui.theme.AccentColors
 
 @Composable
 fun OverviewScreen(modifier: Modifier = Modifier) {
@@ -36,12 +36,12 @@ private fun AccentStrip() {
         Text(text = "Metric accents", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             listOf(
-                MetricAccent.Steps,
-                MetricAccent.Heart,
-                MetricAccent.Sleep,
-                MetricAccent.OxygenSaturation,
-                MetricAccent.Calories,
-                MetricAccent.Weight,
+                AccentColors.Steps,
+                AccentColors.Heart,
+                AccentColors.Sleep,
+                AccentColors.Oxygen,
+                AccentColors.Calories,
+                AccentColors.Weight,
             ).forEach { accent ->
                 Column(
                     modifier = Modifier

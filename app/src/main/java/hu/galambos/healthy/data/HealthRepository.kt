@@ -1,0 +1,32 @@
+package hu.galambos.healthy.data
+
+import hu.galambos.healthy.domain.HealthConnectAvailability
+import hu.galambos.healthy.domain.HistoryAccess
+
+/**
+ * The boundary between the app and Health Connect.
+ *
+ * It exists because an emulator holds no health data: without a fake behind
+ * this interface, every preview and every test would need the phone. Later
+ * additions — a widget, an export — attach as new implementations rather than
+ * as changes to this one.
+ */
+interface HealthRepository {
+
+    fun availability(): HealthConnectAvailability
+
+    /** Read permissions for every metric in the registry. */
+    val readPermissions: Set<String>
+
+    /**
+     * What to ask for, which is the read permissions plus the history
+     * permission where the device offers it. Asking for a permission this
+     * device's Health Connect does not know is a good way to have the whole
+     * request refused.
+     */
+    suspend fun permissionsToRequest(): Set<String>
+
+    suspend fun grantedPermissions(): Set<String>
+
+    suspend fun historyAccess(): HistoryAccess
+}

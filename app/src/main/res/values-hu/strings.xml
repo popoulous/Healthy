@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_overview">Áttekintés</string>
+    <string name="tab_trends">Trendek</string>
+    <string name="tab_sources">Források</string>
+    <string name="tab_settings">Beállítások</string>
+
+    <string name="rationale_title">Az adataid itt maradnak</string>
+    <string name="rationale_body">A Healthy a Health Connectből olvassa ki az egészség- és fitneszadataidat, és egy felületen mutatja meg őket. Csak olvas — soha nem ír vissza semmit. Nincs feltöltés, nincs fiók, nincs felhő és nincs analitika: az adat nem hagyja el ezt a telefont.</string>
+
+    <string name="category_activity">Aktivitás</string>
+    <string name="category_body">Testadatok</string>
+    <string name="category_vitals">Vitális jelek</string>
+    <string name="category_sleep">Alvás</string>
+    <string name="category_nutrition">Táplálkozás</string>
+    <string name="category_wellness">Wellness</string>
+
+    <string name="metric_steps">Lépésszám</string>
+    <string name="metric_heart_rate">Pulzus</string>
+    <string name="metric_sleep">Alvás</string>
+    <string name="metric_oxygen_saturation">Véroxigén</string>
+    <string name="metric_active_calories">Aktív kalória</string>
+    <string name="metric_total_calories">Összes kalória</string>
+    <string name="metric_weight">Testsúly</string>
+
+    <string name="onboarding_intro_title">Az egészségadataid.\nEgy helyen.</string>
+    <string name="onboarding_intro_body">Az órád és a mérleged külön appokon keresztül ír a Health Connectbe, és egyik app sem mutatja mindkettőt. A Healthy mindet kiolvassa, és egy képernyőre teszi.</string>
+    <string name="onboarding_point_private">Privát</string>
+    <string name="onboarding_point_private_detail">Nincs fiók, nincs felhő, nincs analitika.</string>
+    <string name="onboarding_point_device">A te készülékeden</string>
+    <string name="onboarding_point_device_detail">Az adat nem hagyja el ezt a telefont.</string>
+    <string name="onboarding_point_read_only">Csak olvas</string>
+    <string name="onboarding_point_read_only_detail">A Healthy soha nem ír a Health Connectbe.</string>
+    <string name="onboarding_continue">Tovább</string>
+
+    <string name="onboarding_permissions_title">Hozzáférés</string>
+    <string name="onboarding_permissions_body">A Health Connect fogja megkérdezni, melyikhez férhet hozzá a Healthy. Engedélyezhetsz néhányat és megtagadhatsz másokat — amit megtagadsz, az egyszerűen lemarad a dashboardról.</string>
+    <string name="onboarding_permissions_history">Ez a telefon a 30 napnál régebbi adatokhoz is tud hozzáférést adni. Enélkül a Healthy csak az elmúlt egy hónapot látja abból, amit az órád vagy a mérleged írt.</string>
+    <string name="onboarding_permissions_history_unsupported">Ezen a telefonon a Health Connect nem tud 30 napnál régebbi adathoz hozzáférést adni, így a Healthy csak az elmúlt egy hónapot mutatja.</string>
+    <string name="onboarding_grant">Engedélyek megadása</string>
+    <string name="onboarding_back">Vissza</string>
+
+    <string name="unavailable_title">Hiányzik a Health Connect</string>
+    <string name="unavailable_body">A Healthynek enélkül nincs mit olvasnia. A Health Connect a telefon saját egészségadat-tárolója — a telepítése nem küld sehová semmit.</string>
+    <string name="unavailable_install">Health Connect telepítése</string>
+    <string name="update_required_title">A Health Connectet frissíteni kell</string>
+    <string name="update_required_body">A telefonon lévő verzió régebbi annál, mint amin keresztül a Healthy olvas.</string>
+    <string name="update_required_update">Health Connect frissítése</string>
+    <string name="unavailable_no_store">Nincs a készüléken alkalmazásbolt, ahonnan telepíthető lenne.</string>
+    <string name="retry">Újra</string>
+</resources>

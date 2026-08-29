@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The pre-Android-12 half of the same rule as data_extraction_rules.xml:
+  nothing this app holds is backed up anywhere. Backup is already off, but
+  saying it in both places means the answer does not depend on which Android
+  version is reading the manifest.
+-->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

@@ -23,10 +23,11 @@ import hu.galambos.healthy.ui.theme.HealthyTheme
 import hu.galambos.healthy.ui.trends.TrendsScreen
 
 @Composable
-fun HealthyApp() {
+fun HealthyApp(modifier: Modifier = Modifier) {
     var selected by rememberSaveable { mutableStateOf(Destination.Overview) }
 
     Scaffold(
+        modifier = modifier,
         bottomBar = {
             NavigationBar {
                 Destination.entries.forEach { destination ->
