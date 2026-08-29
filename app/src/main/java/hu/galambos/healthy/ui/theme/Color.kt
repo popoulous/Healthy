@@ -57,15 +57,18 @@ fun colorOf(accent: MetricAccent): Color = when (accent) {
 }
 
 /**
- * The sleep stages, dark to light the way sleep charts read: deep at the
- * bottom of the scale and the darkest colour, awake the palest.
+ * The sleep stages, dark to light the way sleep charts read: deep the darkest
+ * and lowest on the scale, REM the palest. Awake is deliberately outside that
+ * ramp, in orange, because it is not a depth of sleep.
  */
 @Composable
 fun sleepStageColor(stage: SleepStage): Color = when (stage) {
     SleepStage.Deep -> Color(0xFF3B2FBF)
     SleepStage.Light, SleepStage.Sleeping -> Color(0xFF6C5CE7)
     SleepStage.Rem -> Color(0xFF9C8CFF)
-    SleepStage.Awake, SleepStage.AwakeInBed, SleepStage.OutOfBed ->
-        androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
+    // Waking up breaks the blue-to-violet run on purpose: an interruption is
+    // not a depth of sleep, and reading it as one is the whole point of seeing
+    // it at all.
+    SleepStage.Awake, SleepStage.AwakeInBed, SleepStage.OutOfBed -> Color(0xFFFF9F43)
     SleepStage.Unknown -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
 }
