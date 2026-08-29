@@ -68,16 +68,23 @@ class ScaleRecorder(
         date: LocalDate,
         settings: Settings,
     ) {
-        // Weight is a measurement and always stands. Health Connect carries it
-        // too, through Zepp Life, so it is not written into the metric store
-        // from here — two sources for one number would only disagree about the
-        // timestamp.
-        val profile = settings.toProfile() ?: return
-        val composition = impedance?.let {
-            BodyCompositionCalculator.of(profile, weightKg, it)
-        } ?: return
+        // The weight is written here too. It used to be left to Health
+        // Connect, on the assumption that Zepp Life would keep putting it
+        // there — but Zepp Life is what this feature replaces, and once it is
+        // gone nothing else writes a weight at all. Where both do arrive, the
+        // day's bucket simply takes the later write; they are measuring the
+        // same scale.
+        val weightOnly = mapOf(MetricId.Weight to weightKg)
 
-        composition.toValues().forEach { (id, value) ->
+        val profile = settings.toProfile()
+        val composition = if (profile != null && impedance != null) {
+            BodyCompositionCalculator.of(profile, weightKg, impedance)
+        } else {
+            null
+        }
+
+        val values = weightOnly + composition?.toValues().orEmpty()
+        values.forEach { (id, value) ->
             store.putDailyValues(id, mapOf(date to value))
             store.putLatest(
                 id,
