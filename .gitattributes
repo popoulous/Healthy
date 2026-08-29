@@ -1,0 +1,18 @@
+# Normalise line endings: LF in the repository, regardless of the OS.
+* text=auto eol=lf
+
+# Gradle wrapper scripts and Windows batch files keep their native endings.
+gradlew text eol=lf
+*.bat text eol=crlf
+
+# Treat common binaries as binary (never apply EOL conversion).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.jar binary
+*.keystore binary
+*.jks binary
