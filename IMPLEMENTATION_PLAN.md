@@ -448,7 +448,7 @@ rajtuk.
 **Az alvás-fázisok kockázata (7.7) még nyitva van.** Az A71-en nincs óra, tehát
 nem derült ki, hogy a Mi Fitness beírja-e a fázisokat a Health Connectbe. A
 kód mindkét esetet kezeli: fázisok nélkül csak időtartam látszik, pontszám
-nélkül, és a képernyő megmondja, miért. Ez a 14T Prón dől el.
+nélkül, és a képernyő megmondja, miért. Ez a 17T Prón dől el.
 
 **Amit a telefon talált meg, nem a fordító:**
 - Az engedély-cache versenyhelyzete: a dashboard ugyanabban a pillanatban
@@ -465,3 +465,83 @@ Háttérolvasás és widget (v2, `READ_HEALTH_DATA_IN_BACKGROUND` kell hozzá).
 90 napos ablak. Adat-export. Aláírt release build. Grafikonok animációja a
 betöltéskori fade-en túl. Instrumentált tesztek — az emulátoron nincs mit
 olvasni, a valódi ellenőrzés a telefonon történik.
+
+---
+
+## 15. Testösszetétel a mérlegtől (BLE) — nem opció, hanem alapképesség
+
+**A helyzet (ellenőrizve, 2026-08-29):** a Zepp Life **csak a testsúlyt** írja a
+Health Connectbe. A testzsír, izomtömeg, csontsúly és testvíz nem kerül át, és
+nincs olyan nyilvános Zepp API sem, amin elkérhető lenne. Health Connecten át
+ez az adat nem létezik — nem az app korlátja, hanem a forrásé.
+
+Ez viszont pont az a hiány, ami miatt az app egyáltalán elkészült: a mérleg
+adata szét van szórva, és a felhasználó a saját méréséhez nem fér hozzá. Egy
+dashboard, ami erre azt mondja, hogy „a forrásod nem osztotta meg", technikailag
+igaz, de nem oldja meg a problémát. Ezért a mérleg **közvetlen olvasása az app
+alapképessége, nem későbbi bővítés.**
+
+**Ami lehetővé teszi:** a Mi Body Composition Scale 2 a BLE-hirdetésében
+sugározza a **nyers súlyt és impedanciát** (`0x181B` service data). Párosítás
+nélkül, bárki hallgathatja, aki hatótávon belül van. A testösszetételt nem a
+mérleg számolja, hanem az app — a Zepp Life is ezt teszi.
+
+### 15.1 Amit ez jelent, és amit nem
+
+| Kérdés | Válasz |
+|---|---|
+| Meg tudjuk-e szerezni a nyers adatot? | Igen, passzív BLE-hallgatással. |
+| Ugyanazt a testzsírt kapjuk, mint a Zepp Life? | **Nem feltétlenül.** A közösségi képlet (openScale „Xiaomi mód") a 2017-es Mi Fit algoritmusból visszafejtett, nem a mai Zepp Life-éból. Az openScale hibajegyei szerint egyes értékek elcsúsznak. |
+| Sérti-e a „csak olvasás" szabályt? | Nem, amíg **nem írunk vissza** a Health Connectbe. |
+| Sérti-e az „on-device" ígéretet? | Nem. A BLE rádió helyi; semmi nem megy hálózatra. |
+
+### 15.2 Döntések, előre
+
+1. **A számolt értékek a mieink, és ezt kiírjuk.** Pontosan úgy, ahogy az
+   alvás-pontszámnál (7.4/1): nem utánozzuk a Zepp Life számát, mert egy
+   ránézésre azonosnak tűnő, de máshogy számolt érték rosszabb, mint egy
+   vállaltan saját. A kártyán ott lesz, hogy a Healthy számolta a mérleg nyers
+   impedanciájából.
+2. **Nem írunk vissza a Health Connectbe.** Csábító volna, hogy „minden egy
+   helyen legyen", de a csak-olvasás az app első számú megkötése, és egy
+   visszafejtett képletből származó értéket beírni mások adattárába rossz
+   irány. A testösszetétel a Healthyben marad.
+3. **Profil-adat kell** (magasság, életkor, nem) — a képlet enélkül nem
+   működik. Beállítás lesz belőle. Ez az első adat, amit a felhasználó *megad*,
+   nem pedig olvasunk.
+4. **Új engedélyek**: `BLUETOOTH_SCAN` (a `neverForLocation` jelzővel, hogy ne
+   kelljen helyadat-engedély) és `BLUETOOTH_CONNECT`. Az engedélylista része az
+   app ígéretének, tehát a README-ben ki kell mondani, mit kér és miért.
+5. **Tárolás kell hozzá — jön a Room.** Ez az első adat, aminek nincs Health
+   Connect otthona, tehát a Healthynek kell megőriznie. Ez nem a §2 döntés
+   visszavonása: a Health Connectből olvasott adatot továbbra sem másoljuk,
+   csak azt tároljuk, aminek máshol nincs helye.
+
+### 15.3 Kockázatok
+
+- **Az impedancia nem mindig érkezik.** A mérleg csak stabilizálódott mérés
+  után, mezítláb küldi; addig csak súly van a hirdetésben. A felületnek kezelnie
+  kell a „megvan a súly, nincs testösszetétel" állapotot.
+- **Időzítés.** A hirdetés akkor szól, amikor a mérlegen állsz. Első lépésben az
+  app **előtérben figyel**: megnyitod, rálépsz, elkapja. Ez bizonyítja, hogy a
+  protokoll működik, és nem kér cserébe se értesítést, se akkumulátort. A
+  háttérben figyelő változat ezután jöhet, ha kell.
+- **A bájt-elrendezést nem találgatjuk.** Az openScale és a Home Assistant
+  integrációk a referencia; a konkrét mezőket implementációkor valódi mérésen
+  ellenőrizzük, nem leírásból.
+- **Két súlyforrás lesz.** A Health Connect (Zepp Life-on át) és a mérleg
+  közvetlenül ugyanazt a súlyt adja, kissé eltérő időbélyeggel. A súly-kártyán a
+  Health Connect marad a mérvadó, a BLE csak a testösszetételt adja — így nem
+  lesz két, egymásnak ellentmondó szám ugyanarról.
+
+### 15.4 Fázisok
+
+- **F7 — a nyers adat.** BLE-engedélyek, előtérben futó szkennelés, a hirdetés
+  értelmezése, és egy nyers kijelzés: súly + impedancia, ahogy jön. Kimenet: a
+  mérlegre lépve megjelenik a nyers érték. Ez a kockázatos rész; ha ez megy, a
+  többi számtan.
+- **F8 — a testösszetétel.** A profil-beállítások, a képlet (tiszta függvény,
+  tesztekkel), és a kártyák: testzsír, izomtömeg, csontsúly, testvíz — mind
+  jelölve, hogy a Healthy számolta.
+- **F9 — megőrzés.** Room, hogy a mérések megmaradjanak, és legyen trendjük is,
+  ne csak pillanatképük.

@@ -29,9 +29,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   focus on the Health Connect specifics.
 
 ## What this app is
-Read-only Android dashboard over Health Connect: it unifies data written by
-different vendor apps (Mi Fitness → watch, Zepp Life / Google Fit → scale)
-into one screen. See the brief for the metric list.
+A read-only Android dashboard over the owner's health data. Most of it comes
+from Health Connect, which unifies what the vendor apps write (Mi Fitness →
+watch, Zepp Life / Google Fit → scale).
+
+Body composition is the exception and is **core, not an extra**: Zepp Life
+writes only weight to Health Connect, so fat, muscle, bone and water are read
+straight from the scale over BLE and computed here. See IMPLEMENTATION_PLAN.md
+§15. "Read-only" still holds — nothing is ever written back to Health Connect,
+including these.
 
 ## Hard constraints (do not violate without explicit approval)
 - **Read-only.** The app never writes records to Health Connect.
@@ -46,8 +52,10 @@ into one screen. See the brief for the metric list.
 - Package id `hu.galambos.healthy`. **minSdk 28**, compileSdk 37, targetSdk 36.
   The floor is 28, not 34, because the app also has to run on a Galaxy A71
   that stops at Android 13 — so the pre-Android-14 paths must stay working.
-- DataStore Preferences for settings. **No database** — Health Connect is the
-  database; a local mirror would only buy a cache-invalidation problem.
+- DataStore Preferences for settings. Health Connect data is **never** mirrored
+  locally — it is the database, and a copy would only buy a cache to
+  invalidate. Room exists solely for scale measurements, which have no Health
+  Connect home at all (IMPLEMENTATION_PLAN.md §15).
 - No server component, no DI framework, no chart library (Compose `Canvas`),
   no navigation library — four flat tabs and one detail level are a nullable
   id and `BackHandler`. Adding a dependency needs a reason; the short list is
@@ -67,7 +75,7 @@ into one screen. See the brief for the metric list.
 
 ## Target devices
 Two, and they differ in ways that matter:
-- **Xiaomi 14T Pro, Android 16** — the real one, with the watch and scale data.
+- **Xiaomi 17T Pro, Android 16** — the real one, with the watch and scale data.
   Health Connect is in-platform.
 - **Samsung Galaxy A71 (SM-A715F), Android 13** — the test device. Health
   Connect is an installable app here, and `READ_HEALTH_DATA_HISTORY` may not
