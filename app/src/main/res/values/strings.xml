@@ -187,7 +187,9 @@
     <string name="settings_version">Version %1$s</string>
     <string name="overview_all_empty_title">Nothing to show yet</string>
     <string name="overview_all_empty_body">Health Connect holds no readings for any of the types this app can read. Nothing has gone wrong — no app on this phone has written them. Show the empty types below to see the full list.</string>
-    <string name="overview_today">Today</string>
+    <string name="overview_today">Summary for today</string>
     <string name="overview_metrics">Metrics</string>
     <string name="overview_more">Everything else</string>
+    <string name="header_date">%1$s, %2$s</string>
+    <string name="header_subtitle">Here is your health today</string>
 </resources>

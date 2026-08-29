@@ -36,14 +36,12 @@ import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
-import hu.galambos.healthy.domain.summary.stats
 import hu.galambos.healthy.ui.format.formatTimestamp
 import hu.galambos.healthy.ui.format.formatValue
 import hu.galambos.healthy.ui.theme.HealthyTheme
 import hu.galambos.healthy.ui.theme.colorOf
 import java.time.Instant
 import java.time.LocalDate
-import kotlin.math.abs
 
 /**
  * One card, the same shape for all thirty-odd metrics: the mark and the name,
@@ -103,22 +101,19 @@ private fun Loaded(descriptor: MetricDescriptor, summary: MetricSummary, accent:
     }
     val formatted = formatValue(latest.value, descriptor.unit)
 
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(text = formatted.number, style = MaterialTheme.typography.displaySmall)
-            if (formatted.unit.isNotEmpty()) {
-                Text(
-                    text = formatted.unit,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 6.dp),
-                )
-            }
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(text = formatted.number, style = MaterialTheme.typography.displaySmall)
+        if (formatted.unit.isNotEmpty()) {
+            Text(
+                text = formatted.unit,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
         }
-        Delta(descriptor, summary)
     }
 
     Sparkline(
@@ -133,33 +128,23 @@ private fun Loaded(descriptor: MetricDescriptor, summary: MetricSummary, accent:
     Footer(latest, accent)
 }
 
-/**
- * How the newest reading sits against the window's average — not against
- * yesterday, which on most of these metrics is noise rather than a trend.
- */
-@Composable
-private fun Delta(descriptor: MetricDescriptor, summary: MetricSummary) {
-    val delta = summary.trend.stats()?.deltaFromAverage ?: return
-    val formatted = formatValue(abs(delta), descriptor.unit)
-    val arrow = if (delta >= 0) "↑" else "↓"
-    Text(
-        text = "$arrow ${formatted.number} ${formatted.unit}".trim(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
 @Composable
 private fun Footer(latest: DataPoint, accent: Color) {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
         Text(
             text = formatTimestamp(latest.time),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier.padding(start = 8.dp),
         ) {
             Box(
                 Modifier

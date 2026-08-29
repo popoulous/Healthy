@@ -178,7 +178,9 @@
     <string name="settings_version">Verzió %1$s</string>
     <string name="overview_all_empty_title">Még nincs mit mutatni</string>
     <string name="overview_all_empty_body">A Health Connectben egyetlen olvasható típushoz sincs adat. Nem hiba: ezen a telefonon egyik app sem írt ilyet. Az üres típusokat alább előhozhatod, hogy lásd a teljes listát.</string>
-    <string name="overview_today">Ma</string>
+    <string name="overview_today">Mai összegzés</string>
     <string name="overview_metrics">Metrikák</string>
     <string name="overview_more">További típusok</string>
+    <string name="header_date">%1$s, %2$s</string>
+    <string name="header_subtitle">Íme a mai egészségügyi áttekintésed</string>
 </resources>

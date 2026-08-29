@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -14,7 +15,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,7 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,7 +45,10 @@ import hu.galambos.healthy.ui.theme.HealthyTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.text.intl.Locale as ComposeLocale
 import java.time.format.FormatStyle
+import java.time.format.TextStyle
+import java.util.Locale
 
 /**
  * The dashboard, in the order the design lays it out: a greeting, the window,
@@ -87,7 +93,6 @@ fun OverviewScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             fullWidth { Header() }
-            fullWidth { WindowSelector(state.window, onWindowChange) }
 
             fullWidth { SectionTitle(stringResource(R.string.overview_today)) }
             fullWidth {
@@ -153,7 +158,7 @@ private fun LazyGridScope.metricCards(
         // a ragged grid reads as a layout fault rather than as information.
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 196.dp),
+            .heightIn(min = 172.dp),
         onClick = { onMetricClick(descriptor.id) },
         onGrantRequested = onGrantRequested,
     )
@@ -185,13 +190,44 @@ private fun Header() {
     } else {
         stringResource(R.string.greeting_named, stringResource(greeting), name)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(text = line, style = MaterialTheme.typography.headlineMedium)
         Text(
-            text = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(LocalDate.now()),
-            style = MaterialTheme.typography.labelSmall,
+            text = stringResource(R.string.header_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // Weekday first, then the date — the order the design uses. Building
+        // it from two localised pieces keeps that order in Hungarian without
+        // hard-coding a pattern that would read wrong in English.
+        val locale = Locale.forLanguageTag(ComposeLocale.current.toLanguageTag())
+        val today = LocalDate.now()
+        val weekday = today.dayOfWeek
+            .getDisplayName(TextStyle.FULL_STANDALONE, locale)
+            .replaceFirstChar { it.titlecase(locale) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_calendar),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = stringResource(
+                    R.string.header_date,
+                    weekday,
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+                        .withLocale(locale)
+                        .format(today),
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -210,28 +246,6 @@ private fun AllEmpty() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-@Composable
-private fun WindowSelector(selected: TrendWindow, onChange: (TrendWindow) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TrendWindow.entries.forEach { window ->
-            FilterChip(
-                selected = window == selected,
-                onClick = { onChange(window) },
-                label = {
-                    Text(
-                        stringResource(
-                            when (window) {
-                                TrendWindow.Week -> R.string.window_week
-                                TrendWindow.Month -> R.string.window_month
-                            },
-                        ),
-                    )
-                },
-            )
-        }
     }
 }
 

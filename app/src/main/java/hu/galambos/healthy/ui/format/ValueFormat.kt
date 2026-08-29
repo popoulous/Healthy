@@ -12,7 +12,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -99,23 +98,23 @@ private fun unitLabel(unit: MetricUnit) = when (unit) {
 }
 
 /**
- * "Today 08:42" for something recorded today, a date otherwise — a bare
- * timestamp on a week-old reading invites the reader to think it is fresh.
+ * "Today 08:42", "Yesterday 07:45", or "27 Aug 07:45" for anything older.
+ *
+ * Deliberately short: this sits in the corner of a card, and a full date there
+ * crowds out the reading it belongs to. It never degrades to a bare time,
+ * though — that would invite reading a week-old measurement as this morning's.
  */
 @Composable
 fun formatTimestamp(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String {
     val locale = currentLocale()
     val dateTime = instant.atZone(zone)
     val today = LocalDate.now(zone)
-    val time = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
-        .withLocale(locale)
-        .format(dateTime)
+    // Zero-padded 24-hour, so the timestamps line up down a column of cards.
+    val time = DateTimeFormatter.ofPattern("HH:mm", locale).format(dateTime)
     return when (dateTime.toLocalDate()) {
         today -> stringResource(R.string.timestamp_today, time)
         today.minusDays(1) -> stringResource(R.string.timestamp_yesterday, time)
-        else -> DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-            .withLocale(locale)
-            .format(dateTime) + " " + time
+        else -> DateTimeFormatter.ofPattern("MMM d.", locale).format(dateTime) + " " + time
     }
 }
 

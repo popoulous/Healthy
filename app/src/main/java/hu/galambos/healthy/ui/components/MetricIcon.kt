@@ -1,15 +1,10 @@
 package hu.galambos.healthy.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
@@ -60,29 +55,23 @@ fun metricIconRes(id: MetricId): Int = when (id) {
 }
 
 /**
- * The icon on its tinted square. The accent lives here and in the chart, never
- * across a whole card — a card that is entirely red would be shouting about a
- * perfectly ordinary heart rate.
+ * The mark itself, tinted with the metric's accent and nothing else behind it.
+ *
+ * The design draws these as bare glyphs. A tinted plate under each one turns a
+ * quiet row of cards into a row of badges, and the accent is already doing its
+ * work in the chart below.
  */
 @Composable
 fun MetricIcon(
     id: MetricId,
     accent: Color,
     modifier: Modifier = Modifier,
-    size: Dp = 32.dp,
+    size: Dp = 20.dp,
 ) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(RoundedCornerShape(size / 3))
-            .background(accent.copy(alpha = 0.14f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            painter = painterResource(metricIconRes(id)),
-            contentDescription = null,
-            tint = accent,
-            modifier = Modifier.size(size * 0.58f),
-        )
-    }
+    Icon(
+        painter = painterResource(metricIconRes(id)),
+        contentDescription = null,
+        tint = accent,
+        modifier = modifier.size(size),
+    )
 }

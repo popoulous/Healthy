@@ -12,7 +12,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,8 +34,11 @@ import java.time.LocalDate
 import kotlin.math.abs
 
 /**
- * The quick-glance row at the top: three readings, no chart, no source. This
- * is the "what is today like" answer; the detail is a scroll away.
+ * The quick-glance row: three readings, centred, with no chart and no source.
+ *
+ * The second line is the unit rather than the metric's name — the design puts
+ * "lépés" under the number, not "Lépésszám", and with the mark above it the
+ * name would only be saying the same thing a third time.
  */
 @Composable
 fun SummaryTile(
@@ -52,60 +57,71 @@ fun SummaryTile(
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            MetricIcon(descriptor.id, accent, size = 28.dp)
+            MetricIcon(descriptor.id, accent, size = 22.dp)
 
             val latest = summary.latest
             if (summary.state == LoadState.Loaded && latest != null) {
                 val formatted = formatValue(latest.value, descriptor.unit)
-                Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    Text(
-                        text = formatted.number,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                    )
-                    if (formatted.unit.isNotEmpty()) {
-                        Text(
-                            text = formatted.unit,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                Text(
+                    text = formatted.number,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                )
+                Text(
+                    text = formatted.unit.ifEmpty { stringResource(descriptor.titleRes) },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Delta(descriptor, summary)
             } else {
                 Text(
                     text = "—",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-
-            Text(
-                text = stringResource(descriptor.titleRes),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-
-            val delta = summary.trend.stats()?.deltaFromAverage
-            if (delta != null) {
-                val formatted = formatValue(abs(delta), descriptor.unit)
                 Text(
-                    text = (if (delta >= 0) "↑ " else "↓ ") + formatted.number,
+                    text = stringResource(descriptor.titleRes),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
     }
 }
+
+/**
+ * Coloured the way the design colours it — up in green, down in red. This is
+ * the one place in the app that passes judgement on a number, and it is worth
+ * knowing that it does: on a step count, down is red because the design says
+ * so, not because a quiet day is a failure.
+ */
+@Composable
+private fun Delta(descriptor: MetricDescriptor, summary: MetricSummary) {
+    val delta = summary.trend.stats()?.deltaFromAverage ?: return
+    val formatted = formatValue(abs(delta), descriptor.unit)
+    val rising = delta >= 0
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = (if (rising) "+" else "−") + formatted.number,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (rising) DeltaUp else DeltaDown,
+            maxLines = 1,
+        )
+    }
+}
+
+private val DeltaUp = Color(0xFF2E7D32)
+private val DeltaDown = Color(0xFFC62828)
 
 @Preview(showBackground = true, widthDp = 130)
 @Composable
