@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,12 +21,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.R
 import hu.galambos.healthy.domain.metric.MetricDescriptor
+import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.metric.MetricUnit
 import hu.galambos.healthy.domain.summary.Bucket
@@ -33,18 +36,18 @@ import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
+import hu.galambos.healthy.domain.summary.stats
 import hu.galambos.healthy.ui.format.formatTimestamp
 import hu.galambos.healthy.ui.format.formatValue
 import hu.galambos.healthy.ui.theme.HealthyTheme
 import hu.galambos.healthy.ui.theme.colorOf
 import java.time.Instant
 import java.time.LocalDate
+import kotlin.math.abs
 
 /**
- * One card, the same shape for all fifty-odd metrics: name, the reading in
- * large type, a mini trend, then when and from where. The accent colours the
- * dot and the chart only — a card whose whole background is red would shout
- * about a heart rate that is perfectly normal.
+ * One card, the same shape for all thirty-odd metrics: the mark and the name,
+ * the reading in large type, a mini trend, then when and from where.
  */
 @Composable
 fun MetricCard(
@@ -60,90 +63,118 @@ fun MetricCard(
         modifier = modifier.then(
             if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
         ),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Box(
-                    Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(accent),
-                )
+                MetricIcon(descriptor.id, accent)
                 Text(
                     text = stringResource(descriptor.titleRes),
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
 
             when (val state = summary.state) {
-                LoadState.Loading -> Placeholder(stringResource(R.string.card_no_data))
+                LoadState.Loading -> Placeholder(stringResource(R.string.loading))
                 LoadState.NotGranted -> NotGranted(onGrantRequested)
-                LoadState.Empty -> Placeholder(stringResource(R.string.card_no_data_detail))
+                LoadState.Empty -> Placeholder(stringResource(R.string.card_no_data))
                 is LoadState.Failed -> Placeholder(failureText(state.reason))
-                LoadState.Loaded -> Loaded(descriptor, summary)
+                LoadState.Loaded -> Loaded(descriptor, summary, accent)
             }
         }
     }
 }
 
 @Composable
-private fun Loaded(descriptor: MetricDescriptor, summary: MetricSummary) {
+private fun Loaded(descriptor: MetricDescriptor, summary: MetricSummary, accent: Color) {
     val latest = summary.latest
     if (latest == null) {
-        Placeholder(stringResource(R.string.card_no_data_detail))
+        Placeholder(stringResource(R.string.card_no_data))
         return
     }
     val formatted = formatValue(latest.value, descriptor.unit)
 
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(text = formatted.number, style = MaterialTheme.typography.displaySmall)
-        if (formatted.unit.isNotEmpty()) {
-            Text(
-                text = formatted.unit,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 6.dp),
-            )
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(text = formatted.number, style = MaterialTheme.typography.displaySmall)
+            if (formatted.unit.isNotEmpty()) {
+                Text(
+                    text = formatted.unit,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+            }
         }
+        Delta(descriptor, summary)
     }
 
     Sparkline(
         buckets = summary.trend,
-        color = colorOf(descriptor.accent),
+        color = accent,
         style = sparklineStyleFor(descriptor.unit),
         modifier = Modifier
             .fillMaxWidth()
-            .height(36.dp),
+            .height(38.dp),
     )
 
-    Footer(latest)
+    Footer(latest, accent)
+}
+
+/**
+ * How the newest reading sits against the window's average — not against
+ * yesterday, which on most of these metrics is noise rather than a trend.
+ */
+@Composable
+private fun Delta(descriptor: MetricDescriptor, summary: MetricSummary) {
+    val delta = summary.trend.stats()?.deltaFromAverage ?: return
+    val formatted = formatValue(abs(delta), descriptor.unit)
+    val arrow = if (delta >= 0) "↑" else "↓"
+    Text(
+        text = "$arrow ${formatted.number} ${formatted.unit}".trim(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
-private fun Footer(latest: DataPoint) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+private fun Footer(latest: DataPoint, accent: Color) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(
             text = formatTimestamp(latest.time),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = rememberSourceLabel(latest.sourcePackage),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(accent),
+            )
+            Text(
+                text = rememberSourceLabel(latest.sourcePackage),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -156,10 +187,7 @@ private fun NotGranted(onGrantRequested: (() -> Unit)?) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (onGrantRequested != null) {
-            TextButton(
-                onClick = onGrantRequested,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-            ) {
+            TextButton(onClick = onGrantRequested, contentPadding = PaddingValues(0.dp)) {
                 Text(stringResource(R.string.card_allow))
             }
         }
@@ -202,7 +230,7 @@ fun sparklineStyleFor(unit: MetricUnit): SparklineStyle = when (unit) {
 @Preview(showBackground = true, widthDp = 200)
 @Composable
 private fun MetricCardPreview() {
-    val descriptor = MetricRegistry[hu.galambos.healthy.domain.metric.MetricId.Steps]
+    val descriptor = MetricRegistry[MetricId.Steps]
     HealthyTheme {
         MetricCard(
             descriptor = descriptor,

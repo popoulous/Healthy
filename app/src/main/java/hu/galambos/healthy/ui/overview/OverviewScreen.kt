@@ -6,17 +6,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +30,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.R
 import hu.galambos.healthy.data.fake.FakeHealthRepository
-import hu.galambos.healthy.domain.metric.MetricCategory
 import hu.galambos.healthy.domain.metric.MetricDescriptor
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
@@ -43,6 +44,15 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+/**
+ * The dashboard, in the order the design lays it out: a greeting, the window,
+ * three headline readings, then the metric grid.
+ *
+ * The grid comes in two parts rather than one per Health Connect category. The
+ * seven metrics this phone's watch and scale actually write lead, because they
+ * are what the screen is for; the remaining two dozen follow under a single
+ * heading instead of six mostly-empty ones.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
@@ -58,74 +68,109 @@ fun OverviewScreen(
     // "what does this phone not have" is a real question too.
     var showEmpty by rememberSaveable { mutableStateOf(false) }
 
+    val visible = { descriptor: MetricDescriptor ->
+        showEmpty || state.summaryFor(descriptor.id).state != LoadState.Empty
+    }
+    val headline = MetricRegistry.all.take(HEADLINE_COUNT).filter(visible)
+    val rest = MetricRegistry.all.drop(HEADLINE_COUNT).filter(visible)
+
     PullToRefreshBox(
         isRefreshing = state.loading,
         onRefresh = onRefresh,
         modifier = modifier.fillMaxSize(),
     ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        fullWidth { Header() }
-        fullWidth { WindowSelector(state.window, onWindowChange) }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            fullWidth { Header() }
+            fullWidth { WindowSelector(state.window, onWindowChange) }
 
-        fullWidth {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                MetricRegistry.headline.forEach { descriptor ->
-                    SummaryTile(
-                        descriptor = descriptor,
-                        summary = state.summaryFor(descriptor.id),
-                        modifier = Modifier.weight(1f),
+            fullWidth { SectionTitle(stringResource(R.string.overview_today)) }
+            fullWidth {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MetricRegistry.headline.forEach { descriptor ->
+                        SummaryTile(
+                            descriptor = descriptor,
+                            summary = state.summaryFor(descriptor.id),
+                            modifier = Modifier.weight(1f),
+                            onClick = { onMetricClick(descriptor.id) },
+                        )
+                    }
+                }
+            }
+
+            if (headline.isNotEmpty()) {
+                fullWidth { SectionTitle(stringResource(R.string.overview_metrics)) }
+                metricCards(headline, state, onMetricClick, onGrantRequested)
+            }
+
+            if (rest.isNotEmpty()) {
+                fullWidth { SectionTitle(stringResource(R.string.overview_more)) }
+                metricCards(rest, state, onMetricClick, onGrantRequested)
+            }
+
+            // Every card hidden leaves a screen with one button on it, which
+            // reads like a bug rather than like an answer.
+            if (headline.isEmpty() && rest.isEmpty()) {
+                fullWidth { AllEmpty() }
+            }
+
+            fullWidth {
+                TextButton(onClick = { showEmpty = !showEmpty }) {
+                    Text(
+                        stringResource(
+                            if (showEmpty) {
+                                R.string.overview_hide_empty
+                            } else {
+                                R.string.overview_show_empty
+                            },
+                        ),
                     )
                 }
             }
         }
-
-        MetricCategory.entries.forEach { category ->
-            val descriptors = MetricRegistry.byCategory[category]
-                .orEmpty()
-                .filter { showEmpty || state.summaryFor(it.id).state != LoadState.Empty }
-            if (descriptors.isEmpty()) return@forEach
-
-            fullWidth {
-                Text(
-                    text = stringResource(category.labelRes),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-            items(descriptors, key = { it.id.name }) { descriptor: MetricDescriptor ->
-                MetricCard(
-                    descriptor = descriptor,
-                    summary = state.summaryFor(descriptor.id),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onMetricClick(descriptor.id) },
-                    onGrantRequested = onGrantRequested,
-                )
-            }
-        }
-
-        fullWidth {
-            TextButton(onClick = { showEmpty = !showEmpty }) {
-                Text(
-                    stringResource(
-                        if (showEmpty) R.string.overview_hide_empty else R.string.overview_show_empty,
-                    ),
-                )
-            }
-        }
-    }
     }
 }
 
+/** The metrics this phone's own sources write, kept at the top of the grid. */
+private const val HEADLINE_COUNT = 7
+
+private fun LazyGridScope.metricCards(
+    descriptors: List<MetricDescriptor>,
+    state: DashboardState,
+    onMetricClick: (MetricId) -> Unit,
+    onGrantRequested: (() -> Unit)?,
+) = items(descriptors, key = { it.id.name }) { descriptor: MetricDescriptor ->
+    MetricCard(
+        descriptor = descriptor,
+        summary = state.summaryFor(descriptor.id),
+        // A fixed floor keeps the two columns level. Cards vary in content —
+        // a refused permission is three lines, a loaded metric is eight — and
+        // a ragged grid reads as a layout fault rather than as information.
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 196.dp),
+        onClick = { onMetricClick(descriptor.id) },
+        onGrantRequested = onGrantRequested,
+    )
+}
+
 /** Header rows and section titles span both columns. */
-private fun androidx.compose.foundation.lazy.grid.LazyGridScope.fullWidth(
-    content: @Composable () -> Unit,
-) = item(span = { GridItemSpan(maxLineSpan) }) { content() }
+private fun LazyGridScope.fullWidth(content: @Composable () -> Unit) =
+    item(span = { GridItemSpan(maxLineSpan) }) { content() }
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 6.dp),
+    )
+}
 
 @Composable
 private fun Header() {
@@ -145,6 +190,24 @@ private fun Header() {
         Text(
             text = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(LocalDate.now()),
             style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun AllEmpty() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.padding(top = 24.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.overview_all_empty_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = stringResource(R.string.overview_all_empty_body),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -172,7 +235,7 @@ private fun WindowSelector(selected: TrendWindow, onChange: (TrendWindow) -> Uni
     }
 }
 
-@Preview(showBackground = true, heightDp = 1200)
+@Preview(showBackground = true, heightDp = 1400)
 @Composable
 private fun OverviewPreview() {
     val fake = FakeHealthRepository()

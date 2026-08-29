@@ -58,7 +58,7 @@ fun MetricDetailScreen(
             body = stringResource(
                 when (summary.state) {
                     LoadState.NotGranted -> R.string.card_not_granted
-                    LoadState.Loading -> R.string.detail_loading
+                    LoadState.Loading -> R.string.loading
                     else -> R.string.card_no_data_detail
                 },
             ),

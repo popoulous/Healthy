@@ -75,7 +75,7 @@
     <string name="card_not_granted">Nincs engedély</string>
     <string name="card_allow">Engedélyezés</string>
     <string name="card_no_data">Nincs adat</string>
-    <string name="card_no_data_detail">Ezt még nem írta be semmi.</string>
+    <string name="card_no_data_detail">Ezt a típust egyik app sem írta be a Health Connectbe.</string>
     <string name="card_failed">Nem sikerült beolvasni</string>
     <string name="card_rate_limited">A Health Connect most terhelt. Próbáld újra egy pillanat múlva.</string>
     <string name="card_history_limited">Csak az elmúlt 30 nap érhető el.</string>
@@ -122,7 +122,7 @@
     <string name="overview_show_empty">Üres típusok mutatása</string>
     <string name="overview_hide_empty">Üres típusok elrejtése</string>
 
-    <string name="detail_loading">Beolvasás…</string>
+    <string name="loading">Beolvasás…</string>
     <string name="detail_source">Forrás</string>
     <string name="detail_min">Legalacsonyabb</string>
     <string name="detail_average">Átlag</string>
@@ -176,4 +176,9 @@
     <string name="settings_history_unsupported">Ezen a telefonon a Health Connect nem tud 30 napnál régebbi hozzáférést adni.</string>
     <string name="settings_about">Névjegy</string>
     <string name="settings_version">Verzió %1$s</string>
+    <string name="overview_all_empty_title">Még nincs mit mutatni</string>
+    <string name="overview_all_empty_body">A Health Connectben egyetlen olvasható típushoz sincs adat. Nem hiba: ezen a telefonon egyik app sem írt ilyet. Az üres típusokat alább előhozhatod, hogy lásd a teljes listát.</string>
+    <string name="overview_today">Ma</string>
+    <string name="overview_metrics">Metrikák</string>
+    <string name="overview_more">További típusok</string>
 </resources>
