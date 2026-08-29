@@ -254,11 +254,12 @@ tervezett dashboard marad, de minden adat egy koppintásra ott van.
 Ez a négy pont tervezési döntést igényel, mert szó szerint implementálva mind
 a négy hazugság lenne a felületen:
 
-1. **Alvás-pontszám (84/100).** A Health Connectben nincs ilyen adattípus.
-   A Mi Fitness a saját appjában számolja, és nem írja be. Vagy elhagyjuk a
-   részletek-képernyőről, vagy magunk számolunk egyet a fázisokból — de
-   akkor jelöljük, hogy a *mi* számításunk, nem a Xiaomié. **Javaslat:**
-   elhagyni; a fázis-bontás önmagában többet mond.
+1. **Alvás-pontszám.** A Mi Fitness 94 pontot és „Kiváló" minősítést mutat,
+   plusz egy korcsoportos percentilist. Egyik sem kerül be a Health
+   Connectbe. **Döntés:** saját, átlátható pontszámot számolunk a
+   fázisarányokból (lásd 7.7), és a felületen jelöljük, hogy ez a *mi*
+   számításunk. A korcsoportos összehasonlítás elmarad — ahhoz populációs
+   adat kellene, ami nincs és nem is lesz.
 2. **Az engedély-képernyő kapcsolói.** A Health Connect engedélyeit app
    nem tudja be-/kikapcsolni: a változtatás kizárólag a HC saját
    párbeszédpanelén vagy a rendszerbeállításokban történik. A képernyő
@@ -266,8 +267,13 @@ a négy hazugság lenne a felületen:
    gomb, ami a HC felületére visz. A makett kapcsolói félrevezetőek.
 3. **„Valós idejű frissítés, ahogy új adat érkezik."** Ehhez háttérolvasás
    kell (`READ_HEALTH_DATA_IN_BACKGROUND`) és a HyperOS akkumulátor-
-   korlátozásainak kijátszása. Az MVP megnyitáskor és húzásra frissít. A
-   marketing-mondatot a README-ben ehhez igazítjuk — háttérfrissítés v2.
+   korlátozásainak kijátszása — ez v2. **Frissítési szabály az MVP-ben:**
+   indításkor, **minden előtérbe hozáskor** (`Lifecycle.State.RESUMED`), és
+   pull-to-refresh-re. Ez lefedi a valós használatot: az ember megnyitja az
+   appot, átvált a Mi Fitnessre szinkronizálni, visszavált — és friss adatot
+   lát. Egy **throttle** kell mellé (kb. 60 mp), különben a fülek közti
+   ugrálás ötvenvalahány típust kérdez újra, és belefutunk a HC kvótájába.
+   A README ehhez igazodik: „frissül, amikor megnyitod", nem „valós idejű".
 4. **„Nyugalmi pulzus" a kiemelt sávban.** Ez külön rekordtípus
    (`RestingHeartRateRecord`), nem ugyanaz, mint a napi átlagpulzus. Hogy a
    Mi Fitness ír-e ilyet, csak a te telefonodon derül ki — F2 után nézzük
@@ -299,6 +305,38 @@ Két képernyő az engedélykérés előtt (`design.txt` 10.): mit csinál az ap
 (privát / a te eszközödön / csak olvas), majd mit fog olvasni. Ez nem
 kozmetika — a Health Connect engedélyképernyője önmagában nem magyarázza meg,
 miért kér ötvenvalahány engedélyt egy dashboard.
+
+### 7.7 Alvás-részletek — a Mi Fitness képernyő rekonstrukciója
+
+A `D:\mifitness` képernyőképek alapján (ezek **nem kerülnek a repóba**, mert
+valódi egészségadatot tartalmaznak, a repó pedig nyilvános). A Mi Fitness
+alvás-nézete hét blokkból áll; alább, hogy melyik mit igényel:
+
+| Mi Fitness blokk | Health Connectből? | Terv |
+|---|---|---|
+| Összes alvásidő + forrás | ✅ `SleepSessionRecord`, `dataOrigin` | 1:1 átvehető |
+| Elalvás / ébredés időpontja | ✅ a session `startTime` / `endTime` | 1:1 |
+| Hipnogram (Mély / Könnyű / REM sáv) | ✅ `stages` lista | 1:1, Canvas-szal |
+| Fázis-donut % + időtartam | ✅ a `stages` összegzéséből | 1:1 |
+| Referenciaértékek (REM 10–30%, könnyű 20–60%, mély 20–40%) | ⚠️ nem adat, hanem klinikai tartomány | fixen beírjuk, forrás megjelölve |
+| Alvás alatti átlag pulzus / véroxigén / légzésszám | ⚠️ közvetve | a session időablakára aggregálunk `HeartRateRecord`, `OxygenSaturationRecord`, `RespiratoryRateRecord` fölött |
+| Pontszám (94, „Kiváló") + korcsoportos percentilis | ❌ nincs a HC-ben | saját pontszám (lásd lent); a percentilis elmarad |
+| Szöveges értelmezés, „alvásjavító terv" | ❌ licencelt tartalom (World Sleep Society stb.) | kimarad |
+
+**A saját pontszám.** Nem a Xiaomi képletét próbáljuk visszafejteni — az nem
+publikus, és a találgatás rosszabb, mint a semmi. Helyette átlátható,
+kiszámolható érték: az alvásidő és a három fázisarány távolsága a fenti
+referencia-tartományoktól, plusz az ébredések száma. A képlet a kódban egy
+helyen áll, a felületen pedig oda van írva, hogy ez a **Healthy** pontszáma,
+nem a Mi Fitnessé. Így a szám összehasonlítható marad önmagával az idő
+során, és senki nem hiszi azt, hogy a Xiaomiét látja.
+
+**Amit F2 után ellenőrizni kell a telefonodon:** a Mi Fitness beírja-e
+egyáltalán a *fázisokat* a Health Connectbe (lehet, hogy csak összesített
+alvásidőt ír), és ír-e `RespiratoryRateRecord`-ot. Ha a fázisok nincsenek
+meg, a donut, a hipnogram és a pontszám is elesik — akkor az alvás-kártya
+csak időtartamot mutat. Ez a terv legnagyobb egyedi kockázata; F2 pont
+ezért néz rá korán a valódi adatra.
 
 ---
 
@@ -358,21 +396,20 @@ Grafikonok, export, widget — ezek v2, nem MVP.
 
 ## 11. Nyitott kérdések
 
-Lezárva azóta: stack **natív Kotlin**, tárolás **nincs DB, csak DataStore**,
+Lezárva azóta: **alvás-pontszám** saját, átlátható számítással (7.7),
+**megszólítás marad** (a név a beállításokból), **frissítés** indításkor,
+előtérbe hozáskor és húzásra (7.4/3), stack **natív Kotlin**,
+tárolás **nincs DB, csak DataStore**,
 sötét téma **kell** (rendszer/világos/sötét), időablak **7 és 30 nap** (a 90
 később), mértékegység-választó **kell**, betűtípus **Roboto**, és van
 **onboarding**.
 
 Ami nyitva maradt:
 
-1. **Alvás-pontszám**: elhagyjuk (ezt javaslom), vagy saját számítást írunk,
-   jelölve, hogy nem a Xiaomié? (7.4/1)
-2. **Megszólítás** („Good morning, …") — az app nem tud nevet a Health
-   Connectből. Elhagyjuk, vagy a beállításokban megadható?
-3. **Dinamikus szín** a kereten a fix metrika-accentek mellett — elfogadod a
+1. **Dinamikus szín** a kereten a fix metrika-accentek mellett — elfogadod a
    7.1-ben javasolt feloldást?
-4. **Aláírt release build** kell-e, vagy elég a debug APK a saját telefonodra.
-5. A `design.txt` végén ígért **további high-fidelity képernyőtervek**:
+2. **Aláírt release build** kell-e, vagy elég a debug APK a saját telefonodra.
+3. A `design.txt` végén ígért **további high-fidelity képernyőtervek**:
    megvárjuk őket, vagy F0 indulhat? A váz és az adatréteg nem függ tőlük.
 
 ## 12. Következő lépés
