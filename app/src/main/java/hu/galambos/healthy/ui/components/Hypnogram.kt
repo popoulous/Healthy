@@ -1,15 +1,7 @@
 package hu.galambos.healthy.ui.components
 
 import androidx.compose.foundation.Canvas
-import kotlin.math.roundToInt
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.BoxWithConstraints
 import java.time.format.FormatStyle
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
@@ -98,12 +90,13 @@ fun Hypnogram(
     val gridColour = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
     val markerColour = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
 
-    /** The tooltip's own width, so it can be kept inside the chart. */
-    var tipWidth by remember { mutableIntStateOf(0) }
-
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val chartWidth = constraints.maxWidth.toFloat()
-
+    ChartOverlay(
+        marker = marker,
+        modifier = modifier,
+        tooltip = if (picked == null) null else {
+            { Readout(picked, colors) }
+        },
+    ) {
         Canvas(
             Modifier
                 .fillMaxWidth()
@@ -228,38 +221,6 @@ fun Hypnogram(
             }
         }
 
-        // Beside the marker rather than under the chart: the reading belongs
-        // to the moment being pointed at, and a caption below leaves the eye
-        // to work out which moment that was.
-        picked?.let { block ->
-            Box(
-                Modifier
-                    .offset {
-                        val wanted = marker!! * chartWidth - tipWidth / 2f
-                        IntOffset(
-                            x = wanted.coerceIn(0f, (chartWidth - tipWidth).coerceAtLeast(0f))
-                                .roundToInt(),
-                            y = 0,
-                        )
-                    }
-                    .onSizeChanged { tipWidth = it.width },
-            ) {
-                Tooltip(block, colors)
-            }
-        }
-    }
-}
-
-@Composable
-private fun Tooltip(block: Block, colors: Map<SleepStage, Color>) {
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 3.dp,
-    ) {
-        Box(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-            Readout(block, colors)
-        }
     }
 }
 

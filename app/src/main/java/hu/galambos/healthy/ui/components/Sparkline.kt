@@ -1,6 +1,30 @@
 package hu.galambos.healthy.ui.components
 
 import androidx.compose.foundation.Canvas
+import kotlin.math.roundToInt
+import java.time.format.FormatStyle
+import java.time.format.DateTimeFormatter
+import hu.galambos.healthy.ui.format.formatValue
+import hu.galambos.healthy.domain.metric.MetricUnit
+import hu.galambos.healthy.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -37,9 +61,21 @@ fun Sparkline(
     color: Color,
     style: SparklineStyle,
     modifier: Modifier = Modifier,
+    unit: MetricUnit? = null,
 ) {
     val values = buckets.map { it.value }
     if (values.none { it != null }) return
+
+    /*
+     * Naming the unit is what makes the chart answerable.
+     *
+     * Without it a tap could mark a day but not say what the day held, so the
+     * chart stays a picture and does not take the touch — which is also what
+     * the overview wants, where the card itself is the target and a second one
+     * inside it would compete for the same finger.
+     */
+    var picked by remember(buckets) { mutableStateOf<Int?>(null) }
+    val at = picked?.let { positionOf(it, values.size, style) }
 
     val present = values.filterNotNull()
     val min = present.min()
@@ -49,14 +85,104 @@ fun Sparkline(
     val floor = if (style == SparklineStyle.Bars) minOf(min, 0.0) else min - span * 0.15
     val ceiling = max + span * 0.15
 
-    Canvas(modifier) {
-        val fraction = { value: Double ->
-            ((value - floor) / (ceiling - floor)).coerceIn(0.0, 1.0).toFloat()
+    val markerColour = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+
+    ChartOverlay(
+        marker = at,
+        tooltip = if (unit == null) null else picked?.let { index ->
+            buckets.getOrNull(index)?.let { bucket -> { DayReadout(bucket, unit, color) } }
+        },
+    ) {
+        Canvas(
+            if (unit == null) {
+                modifier
+            } else {
+                modifier.pointerInput(buckets) {
+                    detectTapGestures { offset ->
+                        picked = indexAt(offset.x / size.width, values.size, style)
+                    }
+                }
+            },
+        ) {
+            val fraction = { value: Double ->
+                ((value - floor) / (ceiling - floor)).coerceIn(0.0, 1.0).toFloat()
+            }
+            when (style) {
+                SparklineStyle.Bars -> drawBars(values, color, fraction)
+                SparklineStyle.Line -> drawSeries(values, color, fraction)
+            }
+            at?.let { position ->
+                val x = position * size.width
+                drawLine(
+                    color = markerColour,
+                    start = Offset(x, 0f),
+                    end = Offset(x, size.height),
+                    strokeWidth = 1.5.dp.toPx(),
+                )
+            }
         }
-        when (style) {
-            SparklineStyle.Bars -> drawBars(values, color, fraction)
-            SparklineStyle.Line -> drawSeries(values, color, fraction)
+    }
+}
+
+/**
+ * Which day a touch landed on, and where that day sits across the width.
+ *
+ * A bar owns a slot, so it is picked anywhere within it and marked down its
+ * middle. A point on a line owns no width at all, so the nearest one is picked
+ * and marked exactly where it is drawn — the marker has to land on the reading
+ * it names, not near it.
+ */
+private fun indexAt(fraction: Float, count: Int, style: SparklineStyle): Int? {
+    if (count <= 0) return null
+    val at = fraction.coerceIn(0f, 1f)
+    return when {
+        style == SparklineStyle.Bars || count == 1 ->
+            (at * count).toInt().coerceIn(0, count - 1)
+
+        else -> (at * (count - 1)).roundToInt().coerceIn(0, count - 1)
+    }
+}
+
+private fun positionOf(index: Int, count: Int, style: SparklineStyle): Float = when {
+    style == SparklineStyle.Bars || count <= 1 -> (index + 0.5f) / count
+    else -> index.toFloat() / (count - 1)
+}
+
+@Composable
+private fun DayReadout(bucket: Bucket, unit: MetricUnit, color: Color) {
+    val day = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+    val value = bucket.value
+
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(color),
+            )
+            Text(
+                text = if (value == null) {
+                    stringResource(R.string.card_no_data)
+                } else {
+                    val formatted = formatValue(value, unit)
+                    if (formatted.unit.isEmpty()) {
+                        formatted.number
+                    } else {
+                        "${formatted.number} ${formatted.unit}"
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
+        Text(
+            text = day.format(bucket.date),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

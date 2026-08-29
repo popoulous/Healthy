@@ -84,6 +84,7 @@ fun MetricDetailScreen(
                 buckets = summary.trend,
                 color = colorOf(descriptor.accent),
                 style = sparklineStyleFor(descriptor.unit),
+                unit = descriptor.unit,
                 modifier = Modifier
                     .fillMaxWidth()
                     // Full screen the same window gets room for its detail;
