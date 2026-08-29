@@ -80,7 +80,6 @@
     <string name="card_rate_limited">A Health Connect most terhelt. Próbáld újra egy pillanat múlva.</string>
     <string name="card_history_limited">Csak az elmúlt 30 nap érhető el.</string>
 
-    <string name="overview_metrics">Metrikák</string>
     <string name="window_week">7 nap</string>
     <string name="window_month">30 nap</string>
 
@@ -88,4 +87,38 @@
     <string name="greeting_afternoon">Szép napot</string>
     <string name="greeting_evening">Jó estét</string>
     <string name="coming_soon">Készül. Előbb a dashboard.</string>
+
+    <string name="metric_distance">Távolság</string>
+    <string name="metric_elevation">Szintemelkedés</string>
+    <string name="metric_exercise">Edzés</string>
+    <string name="metric_floors">Megmászott emelet</string>
+    <string name="metric_power">Teljesítmény</string>
+    <string name="metric_speed">Sebesség</string>
+    <string name="metric_steps_cadence">Lépésütem</string>
+    <string name="metric_cycling_cadence">Pedálütem</string>
+    <string name="metric_vo2max">VO2 max</string>
+    <string name="metric_wheelchair_pushes">Keréktolás</string>
+    <string name="metric_body_fat">Testzsír</string>
+    <string name="metric_body_water">Testvíz</string>
+    <string name="metric_bone_mass">Csonttömeg</string>
+    <string name="metric_lean_mass">Izomtömeg</string>
+    <string name="metric_height">Magasság</string>
+    <string name="metric_basal_rate">Alapanyagcsere</string>
+    <string name="metric_resting_heart_rate">Nyugalmi pulzus</string>
+    <string name="metric_hrv">Pulzusvariabilitás</string>
+    <string name="metric_blood_pressure">Vérnyomás</string>
+    <string name="metric_blood_glucose">Vércukor</string>
+    <string name="metric_body_temperature">Testhőmérséklet</string>
+    <string name="metric_skin_temperature">Bőrhőmérséklet-változás</string>
+    <string name="metric_respiratory_rate">Légzésszám</string>
+    <string name="metric_hydration">Folyadékbevitel</string>
+    <string name="metric_nutrition">Táplálkozás</string>
+    <string name="metric_mindfulness">Meditáció</string>
+
+    <string name="unit_cm">cm</string>
+    <string name="unit_ms">ms</string>
+    <string name="unit_spm">lépés/perc</string>
+    <string name="unit_rpm">ford/perc</string>
+    <string name="overview_show_empty">Üres típusok mutatása</string>
+    <string name="overview_hide_empty">Üres típusok elrejtése</string>
 </resources>

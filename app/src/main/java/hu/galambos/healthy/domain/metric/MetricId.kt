@@ -16,7 +16,6 @@ enum class MetricId {
     Weight,
 
     // Everything else Health Connect can hold, added in F3.
-    ActivityIntensity,
     BasalMetabolicRate,
     BloodGlucose,
     BloodPressure,
@@ -35,7 +34,6 @@ enum class MetricId {
     LeanBodyMass,
     Mindfulness,
     Nutrition,
-    PlannedExercise,
     Power,
     RespiratoryRate,
     RestingHeartRate,

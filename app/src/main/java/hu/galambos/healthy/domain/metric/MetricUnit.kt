@@ -24,4 +24,9 @@ enum class MetricUnit(val decimals: Int) {
     MillilitresPerMinuteKilogram(1),
     Minutes(0),
     BreathsPerMinute(0),
+    Centimetres(0),
+    Milliseconds(0),
+    StepsPerMinute(0),
+    RevolutionsPerMinute(0),
+    CelsiusDelta(1),
 }

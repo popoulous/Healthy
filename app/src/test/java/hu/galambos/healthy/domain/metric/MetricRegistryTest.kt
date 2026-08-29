@@ -18,6 +18,17 @@ class MetricRegistryTest {
         assertEquals(ids.size, ids.toSet().size)
     }
 
+    /**
+     * MetricId is what preferences and UI state key off, so an id without a
+     * row is a metric that can be referenced and never drawn.
+     */
+    @Test
+    fun `every id has a descriptor`() {
+        MetricId.entries.forEach { id ->
+            assertEquals(id, MetricRegistry[id].id)
+        }
+    }
+
     @Test
     fun `every metric maps to a distinct record type`() {
         val types = MetricRegistry.all.map { it.recordType }

@@ -107,6 +107,11 @@ class FakeHealthRepository(
             MetricUnit.MetresPerSecond -> 1.1 + factor * 2.4
             MetricUnit.MillilitresPerMinuteKilogram -> 38 + factor * 9
             MetricUnit.BreathsPerMinute -> 13 + factor * 5
+            MetricUnit.Centimetres -> 178.0
+            MetricUnit.Milliseconds -> 28 + factor * 30
+            MetricUnit.StepsPerMinute -> 95 + factor * 30
+            MetricUnit.RevolutionsPerMinute -> 60 + factor * 30
+            MetricUnit.CelsiusDelta -> -0.4 + factor * 0.9
         }.let { if (abs(it) < 0.0001) null else it }
     }
 

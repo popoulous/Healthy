@@ -65,6 +65,11 @@ private fun unitLabel(unit: MetricUnit) = when (unit) {
     MetricUnit.MillilitresPerMinuteKilogram -> R.string.unit_vo2
     MetricUnit.Minutes -> R.string.unit_minutes
     MetricUnit.BreathsPerMinute -> R.string.unit_breaths
+    MetricUnit.Centimetres -> R.string.unit_cm
+    MetricUnit.Milliseconds -> R.string.unit_ms
+    MetricUnit.StepsPerMinute -> R.string.unit_spm
+    MetricUnit.RevolutionsPerMinute -> R.string.unit_rpm
+    MetricUnit.CelsiusDelta -> R.string.unit_celsius
 }
 
 /**

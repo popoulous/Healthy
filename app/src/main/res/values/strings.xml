@@ -89,7 +89,6 @@
     <string name="card_rate_limited">Health Connect is busy. Try again in a moment.</string>
     <string name="card_history_limited">Only the last 30 days are available.</string>
 
-    <string name="overview_metrics">Metrics</string>
     <string name="window_week">7 days</string>
     <string name="window_month">30 days</string>
 
@@ -97,4 +96,38 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="coming_soon">Being built. The dashboard comes first.</string>
+
+    <string name="metric_distance">Distance</string>
+    <string name="metric_elevation">Elevation gained</string>
+    <string name="metric_exercise">Exercise</string>
+    <string name="metric_floors">Floors climbed</string>
+    <string name="metric_power">Power</string>
+    <string name="metric_speed">Speed</string>
+    <string name="metric_steps_cadence">Step cadence</string>
+    <string name="metric_cycling_cadence">Pedalling cadence</string>
+    <string name="metric_vo2max">VO2 max</string>
+    <string name="metric_wheelchair_pushes">Wheelchair pushes</string>
+    <string name="metric_body_fat">Body fat</string>
+    <string name="metric_body_water">Body water</string>
+    <string name="metric_bone_mass">Bone mass</string>
+    <string name="metric_lean_mass">Lean body mass</string>
+    <string name="metric_height">Height</string>
+    <string name="metric_basal_rate">Basal metabolic rate</string>
+    <string name="metric_resting_heart_rate">Resting heart rate</string>
+    <string name="metric_hrv">Heart rate variability</string>
+    <string name="metric_blood_pressure">Blood pressure</string>
+    <string name="metric_blood_glucose">Blood glucose</string>
+    <string name="metric_body_temperature">Body temperature</string>
+    <string name="metric_skin_temperature">Skin temperature change</string>
+    <string name="metric_respiratory_rate">Respiratory rate</string>
+    <string name="metric_hydration">Hydration</string>
+    <string name="metric_nutrition">Nutrition</string>
+    <string name="metric_mindfulness">Mindfulness</string>
+
+    <string name="unit_cm">cm</string>
+    <string name="unit_ms">ms</string>
+    <string name="unit_spm">spm</string>
+    <string name="unit_rpm">rpm</string>
+    <string name="overview_show_empty">Show types with no data</string>
+    <string name="overview_hide_empty">Hide types with no data</string>
 </resources>
