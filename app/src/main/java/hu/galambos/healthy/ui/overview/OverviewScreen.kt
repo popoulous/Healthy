@@ -28,6 +28,7 @@ import hu.galambos.healthy.R
 import hu.galambos.healthy.data.fake.FakeHealthRepository
 import hu.galambos.healthy.domain.metric.MetricCategory
 import hu.galambos.healthy.domain.metric.MetricDescriptor
+import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.TrendWindow
@@ -45,6 +46,7 @@ fun OverviewScreen(
     onWindowChange: (TrendWindow) -> Unit,
     modifier: Modifier = Modifier,
     onGrantRequested: (() -> Unit)? = null,
+    onMetricClick: (MetricId) -> Unit = {},
 ) {
     // Most of the thirty-odd types are empty on any given phone. Hiding them
     // keeps the dashboard the design asked for; the toggle is there because
@@ -91,6 +93,7 @@ fun OverviewScreen(
                     descriptor = descriptor,
                     summary = state.summaryFor(descriptor.id),
                     modifier = Modifier.fillMaxWidth(),
+                    onClick = { onMetricClick(descriptor.id) },
                     onGrantRequested = onGrantRequested,
                 )
             }

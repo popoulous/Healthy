@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
+import hu.galambos.healthy.domain.sleep.SleepNight
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
 import hu.galambos.healthy.domain.summary.TrendWindow
@@ -21,6 +22,11 @@ data class DashboardState(
     val window: TrendWindow = TrendWindow.Week,
     val summaries: Map<MetricId, MetricSummary> = emptyMap(),
     val loading: Boolean = false,
+    /**
+     * Loaded on demand rather than with the dashboard: the shape of a night
+     * costs several reads and only the sleep detail screen shows it.
+     */
+    val sleepNight: SleepNight? = null,
 ) {
     fun summaryFor(id: MetricId): MetricSummary =
         summaries[id] ?: MetricSummary(id, LoadState.Loading)
@@ -52,6 +58,8 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
 
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
+            // A reload means the night may have changed too.
+            _state.update { it.copy(sleepNight = null) }
             _state.update { it.copy(loading = true) }
             val window = _state.value.window
             // Sequential on purpose: the cards fill in as answers arrive,
@@ -62,6 +70,15 @@ class DashboardViewModel(private val repository: HealthRepository) : ViewModel()
                 _state.update { it.copy(summaries = it.summaries + (descriptor.id to summary)) }
             }
             _state.update { it.copy(loading = false) }
+        }
+    }
+
+    /** Called when the sleep detail opens; cheap to repeat, so not throttled. */
+    fun loadSleepNight() {
+        if (_state.value.sleepNight != null) return
+        viewModelScope.launch {
+            val night = repository.loadSleepNight()
+            _state.update { it.copy(sleepNight = night) }
         }
     }
 

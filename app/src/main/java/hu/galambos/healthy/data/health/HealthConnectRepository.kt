@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.SleepSessionRecord
 import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.HistoryAccess
 import hu.galambos.healthy.domain.metric.MetricDescriptor
 import hu.galambos.healthy.domain.metric.MetricRegistry
+import hu.galambos.healthy.domain.sleep.SleepNight
 import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
@@ -99,6 +101,20 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
             MetricSummary(descriptor.id, LoadState.Failed(FailureReason.RateLimited))
         } catch (_: Exception) {
             MetricSummary(descriptor.id, LoadState.Failed(FailureReason.Unknown))
+        }
+    }
+
+    override suspend fun loadSleepNight(): SleepNight? {
+        val client = client ?: return null
+        if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in cachedGranted) {
+            return null
+        }
+        return try {
+            SleepReader(client).readLatestNight()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            null
         }
     }
 

@@ -130,4 +130,36 @@
     <string name="unit_rpm">rpm</string>
     <string name="overview_show_empty">Show types with no data</string>
     <string name="overview_hide_empty">Hide types with no data</string>
+
+    <string name="detail_loading">Reading…</string>
+    <string name="detail_source">Source</string>
+    <string name="detail_min">Lowest</string>
+    <string name="detail_average">Average</string>
+    <string name="detail_max">Highest</string>
+    <string name="detail_above_average">%1$s above the %2$d-day average</string>
+    <string name="detail_below_average">%1$s below the %2$d-day average</string>
+    <plurals name="detail_days_with_data">
+        <item quantity="one">%1$d day with data</item>
+        <item quantity="other">%1$d days with data</item>
+    </plurals>
+
+    <string name="sleep_fell_asleep">Fell asleep</string>
+    <string name="sleep_woke_up">Woke up</string>
+    <string name="sleep_no_stages">This source recorded how long you slept, but not the stages, so there is nothing to break down.</string>
+    <string name="sleep_score_points">points</string>
+    <string name="sleep_score_explanation">The score Healthy computes, from the stage shares and how often the night was interrupted. Not the one your watch app shows.</string>
+    <string name="sleep_stage_rem">REM</string>
+    <string name="sleep_stage_light">Light</string>
+    <string name="sleep_stage_deep">Deep</string>
+    <string name="sleep_reference_rem">Reference 10–30%</string>
+    <string name="sleep_reference_light">Reference 20–60%</string>
+    <string name="sleep_reference_deep">Reference 20–40%</string>
+    <string name="sleep_vitals">During the night</string>
+    <string name="sleep_average_heart_rate">Average heart rate</string>
+    <string name="sleep_average_oxygen">Average blood oxygen</string>
+    <string name="sleep_average_respiratory">Average respiratory rate</string>
+
+    <string name="trends_title">Trends</string>
+    <string name="trends_empty">Nothing to compare yet.</string>
+    <string name="back">Back</string>
 </resources>

@@ -16,6 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.galambos.healthy.domain.HealthConnectAvailability
+import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.ui.onboarding.OnboardingScreen
 import hu.galambos.healthy.ui.overview.DashboardViewModel
 import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
@@ -80,6 +81,9 @@ fun HealthyRoot(
             onWindowChange = dashboardViewModel::setWindow,
             modifier = modifier,
             onGrantRequested = { permissionLauncher.launch(access.required) },
+            onDetailOpened = { id ->
+                if (id == MetricId.Sleep) dashboardViewModel.loadSleepNight()
+            },
         )
     }
 }

@@ -6,6 +6,10 @@ import hu.galambos.healthy.domain.HistoryAccess
 import hu.galambos.healthy.domain.metric.MetricDescriptor
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricUnit
+import hu.galambos.healthy.domain.sleep.SleepNight
+import hu.galambos.healthy.domain.sleep.SleepSegment
+import hu.galambos.healthy.domain.sleep.SleepStage
+import hu.galambos.healthy.domain.sleep.SleepVitals
 import hu.galambos.healthy.domain.summary.Bucket
 import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.LoadState
@@ -72,6 +76,42 @@ class FakeHealthRepository(
                 )
             },
             trend = trend,
+        )
+    }
+
+    override suspend fun loadSleepNight(): SleepNight? = sleepNight()
+
+    /** A night with the shape a real one has: cycles, not one block. */
+    fun sleepNight(): SleepNight? {
+        if (!granted) return null
+        val start = today.minusDays(1).atTime(22, 30).atZone(java.time.ZoneId.systemDefault())
+            .toInstant()
+        val pattern = listOf(
+            SleepStage.Light to 35L,
+            SleepStage.Deep to 55L,
+            SleepStage.Light to 40L,
+            SleepStage.Rem to 25L,
+            SleepStage.Light to 45L,
+            SleepStage.Deep to 50L,
+            SleepStage.Awake to 6L,
+            SleepStage.Light to 40L,
+            SleepStage.Rem to 35L,
+            SleepStage.Light to 30L,
+            SleepStage.Deep to 25L,
+            SleepStage.Rem to 40L,
+            SleepStage.Light to 46L,
+        )
+        var cursor = start
+        val segments = pattern.map { (stage, minutes) ->
+            val end = cursor.plus(java.time.Duration.ofMinutes(minutes))
+            SleepSegment(stage, cursor, end).also { cursor = end }
+        }
+        return SleepNight(
+            start = start,
+            end = cursor,
+            sourcePackage = "com.xiaomi.wearable",
+            segments = segments,
+            vitals = SleepVitals(heartRateBpm = 58.0, oxygenPercent = 97.0, respiratoryRate = 16.0),
         )
     }
 

@@ -121,4 +121,36 @@
     <string name="unit_rpm">ford/perc</string>
     <string name="overview_show_empty">Üres típusok mutatása</string>
     <string name="overview_hide_empty">Üres típusok elrejtése</string>
+
+    <string name="detail_loading">Beolvasás…</string>
+    <string name="detail_source">Forrás</string>
+    <string name="detail_min">Legalacsonyabb</string>
+    <string name="detail_average">Átlag</string>
+    <string name="detail_max">Legmagasabb</string>
+    <string name="detail_above_average">%1$s-val a %2$d napos átlag felett</string>
+    <string name="detail_below_average">%1$s-val a %2$d napos átlag alatt</string>
+    <plurals name="detail_days_with_data">
+        <item quantity="one">%1$d napon van adat</item>
+        <item quantity="other">%1$d napon van adat</item>
+    </plurals>
+
+    <string name="sleep_fell_asleep">Elaludt</string>
+    <string name="sleep_woke_up">Felébredt</string>
+    <string name="sleep_no_stages">Ez a forrás csak az alvás hosszát rögzítette, a fázisokat nem, így nincs mit lebontani.</string>
+    <string name="sleep_score_points">pont</string>
+    <string name="sleep_score_explanation">A Healthy saját pontszáma, a fázisarányokból és az ébredések számából. Nem az, amit az órád appja mutat.</string>
+    <string name="sleep_stage_rem">REM</string>
+    <string name="sleep_stage_light">Könnyű</string>
+    <string name="sleep_stage_deep">Mély</string>
+    <string name="sleep_reference_rem">Referencia 10–30%</string>
+    <string name="sleep_reference_light">Referencia 20–60%</string>
+    <string name="sleep_reference_deep">Referencia 20–40%</string>
+    <string name="sleep_vitals">Az éjszaka folyamán</string>
+    <string name="sleep_average_heart_rate">Átlagos pulzus</string>
+    <string name="sleep_average_oxygen">Átlagos véroxigén</string>
+    <string name="sleep_average_respiratory">Átlagos légzésszám</string>
+
+    <string name="trends_title">Trendek</string>
+    <string name="trends_empty">Még nincs mit összehasonlítani.</string>
+    <string name="back">Vissza</string>
 </resources>

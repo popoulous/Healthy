@@ -3,6 +3,7 @@ package hu.galambos.healthy.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import hu.galambos.healthy.domain.metric.MetricAccent
+import hu.galambos.healthy.domain.sleep.SleepStage
 
 /**
  * The palette is fixed rather than derived from the wallpaper. Material You
@@ -53,4 +54,18 @@ fun colorOf(accent: MetricAccent): Color = when (accent) {
     MetricAccent.Calories -> AccentColors.Calories
     MetricAccent.Weight -> AccentColors.Weight
     MetricAccent.Neutral -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+}
+
+/**
+ * The sleep stages, dark to light the way sleep charts read: deep at the
+ * bottom of the scale and the darkest colour, awake the palest.
+ */
+@Composable
+fun sleepStageColor(stage: SleepStage): Color = when (stage) {
+    SleepStage.Deep -> Color(0xFF3B2FBF)
+    SleepStage.Light, SleepStage.Sleeping -> Color(0xFF6C5CE7)
+    SleepStage.Rem -> Color(0xFF9C8CFF)
+    SleepStage.Awake, SleepStage.AwakeInBed, SleepStage.OutOfBed ->
+        androidx.compose.material3.MaterialTheme.colorScheme.outlineVariant
+    SleepStage.Unknown -> androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
 }
