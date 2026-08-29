@@ -45,6 +45,13 @@ class ScaleViewModel(
 
     private var listenJob: Job? = null
 
+    init {
+        // Rows recorded while the completion rule was too loose are not
+        // measurements — a weight caught mid-step is not a body — so they are
+        // cleared once, and what remains is worked out again.
+        viewModelScope.launch { recorder.discardIncomplete(settings.settings.first()) }
+    }
+
     fun refreshAvailability() {
         _state.update { it.copy(availability = scanner.availability()) }
     }
@@ -60,11 +67,14 @@ class ScaleViewModel(
             scanner.readings().collect { reading ->
                 _state.update { it.copy(live = reading) }
 
-                // A settled weight is a weigh-in, with or without an
-                // impedance. Requiring both meant a measurement taken in socks
-                // recorded nothing at all — losing the weight as well as the
-                // composition, when only the composition was ever in doubt.
-                if (reading.stabilised) {
+                // The impedance is what marks the end of a weigh-in, and
+                // nothing else does. The "stabilised" flag is set on
+                // transitional readings too: loosening the rule to trust it
+                // recorded twenty-three rows from one weigh-in, ending with
+                // 3.25 kg — the instant of stepping off, filed as a body
+                // weight. The impedance appeared exactly twice in that run,
+                // both times on the real 95.1 kg reading.
+                if (reading.isComplete) {
                     // Storing is keyed by the measurement's own timestamp, so
                     // the scale repeating its last result costs nothing and a
                     // second weigh-in is a second record.

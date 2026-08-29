@@ -25,6 +25,9 @@ interface MetricDao {
     @Query("SELECT * FROM latest_reading")
     fun observeLatest(): Flow<List<LatestReadingEntity>>
 
+    @Query("SELECT * FROM latest_reading WHERE metricId = :metricId")
+    suspend fun latestFor(metricId: String): LatestReadingEntity?
+
     /**
      * Used when a deletion arrives: Health Connect reports only the id of the
      * deleted record and not its type, so the affected day cannot be worked
@@ -52,6 +55,13 @@ interface ScaleDao {
     /** Every measurement, for when a profile change invalidates the derived values. */
     @Query("SELECT * FROM scale_measurement ORDER BY timeEpochMillis")
     suspend fun all(): List<ScaleMeasurementEntity>
+
+    /**
+     * A row with no impedance is a weight caught mid-step, not a weigh-in.
+     * Such rows were briefly recorded while the completion rule was too loose.
+     */
+    @Query("DELETE FROM scale_measurement WHERE impedanceOhms IS NULL")
+    suspend fun deleteIncomplete(): Int
 }
 
 @Dao

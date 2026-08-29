@@ -69,8 +69,19 @@ class MetricStore(private val database: HealthyDatabase) {
         )
     }
 
+    /**
+     * Keeps whichever reading is actually the newest, rather than whichever
+     * was written last.
+     *
+     * Two sources can hold the same metric — the scale weighs you now, Health
+     * Connect remembers a weigh-in from this morning — and the sync happens to
+     * run after the scale. Without this, today's weight was being overwritten
+     * by an older one every time the app resumed.
+     */
     suspend fun putLatest(id: MetricId, point: DataPoint?) {
         if (point == null) return
+        val existing = metrics.latestFor(id.name)
+        if (existing != null && existing.timeEpochMillis > point.time.toEpochMilli()) return
         metrics.upsertLatest(
             listOf(
                 LatestReadingEntity(

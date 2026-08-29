@@ -1,5 +1,6 @@
 package hu.galambos.healthy.data.sync
 
+import android.util.Log
 import hu.galambos.healthy.data.ChangePoll
 import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.data.local.MetricStore
@@ -23,11 +24,25 @@ class HealthSync(
     private val today: () -> LocalDate = LocalDate::now,
 ) {
 
-    suspend fun sync() {
+    /**
+     * [force] is set when the user asked: a launch, a pull, the refresh
+     * button. Those are precisely the moments someone suspects the screen is
+     * stale, so the recent days are read again rather than trusting the change
+     * feed to have mentioned them. The throttled background pass still relies
+     * on the feed, which is what keeps this cheap.
+     */
+    suspend fun sync(force: Boolean = false) {
         val state = store.syncState()
         val token = state?.changesToken
 
+        if (force) {
+            val end = today()
+            Log.d(TAG, "forced refresh — re-reading the last $RECENT_DAYS days")
+            MetricRegistry.all.forEach { readInto(it, end.minusDays(RECENT_DAYS), end) }
+        }
+
         if (token == null) {
+            Log.d(TAG, "no token yet — full sync")
             fullSync()
             return
         }
@@ -36,16 +51,26 @@ class HealthSync(
             // A token unused for thirty days is gone, and the documented
             // recovery is to read again from the last known point rather than
             // from nothing.
-            ChangePoll.TokenExpired -> resyncSince(
-                Instant.ofEpochMilli(state.lastSyncEpochMillis),
-            )
+            ChangePoll.TokenExpired -> {
+                Log.d(TAG, "token expired — re-reading")
+                resyncSince(
+                    Instant.ofEpochMilli(state.lastSyncEpochMillis),
+                )
+            }
 
             // Health Connect is unreachable or refused. Leave the store as it
             // is: stale data beats a blank dashboard, and the next resume
             // tries again.
-            ChangePoll.Unavailable -> Unit
+            ChangePoll.Unavailable -> Log.w(TAG, "changes unavailable — keeping what we have")
 
-            is ChangePoll.Changes -> applyChanges(poll)
+            is ChangePoll.Changes -> {
+                Log.d(
+                    TAG,
+                    "changes: ${poll.affected.size} metrics touched " +
+                        "${poll.affected.keys}, deletions=${poll.deletions}",
+                )
+                applyChanges(poll)
+            }
         }
     }
 
@@ -95,16 +120,24 @@ class HealthSync(
      */
     private suspend fun readInto(descriptor: MetricDescriptor, from: LocalDate, to: LocalDate) {
         if (!repository.isGranted(descriptor)) return
-        store.putDailyValues(descriptor.id, repository.readDailyValues(descriptor, from, to))
-        store.putLatest(descriptor.id, repository.readLatest(descriptor))
+        val values = repository.readDailyValues(descriptor, from, to)
+        val latest = repository.readLatest(descriptor)
+        Log.d(TAG, "${descriptor.id}: ${values.size} days, latest=${latest?.value} @ ${latest?.time}")
+        store.putDailyValues(descriptor.id, values)
+        store.putLatest(descriptor.id, latest)
     }
 
     private companion object {
+        const val TAG = "HealthySync"
+
         /**
          * A year on first run. Enough for a real trend, bounded enough that
          * the first sync finishes while the user is still looking at it.
          */
         const val INITIAL_DAYS = 365L
+
+        /** Enough to catch anything written today or last night. */
+        const val RECENT_DAYS = 2L
         const val DELETION_REREAD_DAYS = 30L
         const val EXPIRY_REREAD_DAYS = 30L
     }

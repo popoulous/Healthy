@@ -100,7 +100,7 @@ class DashboardViewModel(
                 .mapTo(mutableSetOf()) { it.id }
             _state.update { it.copy(summaries = overlayRefusals(it.summaries)) }
 
-            sync.sync()
+            sync.sync(force = force)
             _state.update { it.copy(loading = false) }
         }
     }

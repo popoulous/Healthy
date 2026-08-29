@@ -1,5 +1,6 @@
 package hu.galambos.healthy.data.scale
 
+import android.util.Log
 import hu.galambos.healthy.data.local.HealthyDatabase
 import hu.galambos.healthy.data.local.MetricStore
 import hu.galambos.healthy.data.local.ScaleMeasurementEntity
@@ -20,6 +21,8 @@ import java.time.temporal.ChronoUnit
 /** Marks a reading as this app's own work rather than another app's record. */
 const val SCALE_SOURCE = "healthy.scale"
 
+private const val TAG = "HealthyScaleStore"
+
 /**
  * Files a weigh-in.
  *
@@ -35,7 +38,7 @@ class ScaleRecorder(
 ) {
 
     suspend fun record(reading: ScaleReading, settings: Settings) {
-        if (!reading.stabilised) return
+        if (!reading.isComplete) return
 
         val time = reading.instant()
         database.scaleDao().upsert(
@@ -49,12 +52,25 @@ class ScaleRecorder(
     }
 
     /**
+     * Drops anything that was never a finished weigh-in, then works the
+     * remaining measurements out again — including the latest, which is what a
+     * card shows.
+     */
+    suspend fun discardIncomplete(settings: Settings) {
+        val removed = database.scaleDao().deleteIncomplete()
+        Log.d(TAG, "discarded $removed incomplete measurements")
+        if (removed > 0) recomputeAll(settings)
+    }
+
+    /**
      * Recomputes every stored measurement. Called when the profile changes:
      * the numbers depend on height, age and sex, so a corrected profile means
      * the whole history was computed from the wrong person.
      */
     suspend fun recomputeAll(settings: Settings) {
-        database.scaleDao().all().forEach { measurement ->
+        val all = database.scaleDao().all()
+        Log.d(TAG, "recomputing ${all.size} measurements, profile=${settings.toProfile()}")
+        all.forEach { measurement ->
             derive(
                 weightKg = measurement.weightKg,
                 impedance = measurement.impedanceOhms,
