@@ -5,7 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Communication
 - Talk to the user in Hungarian.
 - Everything that lands in the repo is in English: code, identifiers,
-  comments, commit messages, docs, README.
+  comments, commit messages, README.
+- Exception, following Movora's practice: `IMPLEMENTATION_PLAN.md` and any
+  future `PROJECT_CONTEXT.md` are written in Hungarian — they are working
+  documents for the owner, not public-facing docs.
 
 ## Workflow
 - Never guess — look things up (codebase, official Android / Health Connect
@@ -13,8 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   Android release; verify against the current SDK docs, do not recall.
 - Discuss the approach first, produce a plan, and only start coding after
   the user approves it. Use Plan Mode for any multi-file or risky change.
-- The product brief lives in `health-connect-dashboard-brief.md` — read it
-  before planning. The detailed design will live in `IMPLEMENTATION_PLAN.md`.
+- The product brief lives in `health-connect-dashboard-brief.md`, the visual
+  direction in `design.txt` (authoritative) and `docs/design-mockup.png`
+  (illustration); the plan and the reasoning behind every decision live in
+  `IMPLEMENTATION_PLAN.md`.
+  Read both before planning. The plan deliberately overrides the brief in
+  places (minSdk, scope) — the plan wins, and §2 says why.
 - Keep this file concise; record project-level decisions in memory.
 - The developer is experienced (13+ years) — skip Kotlin/Android basics,
   focus on the Health Connect specifics.
@@ -31,10 +38,31 @@ into one screen. See the brief for the metric list.
 - MVP scope = the metrics listed in the brief. Charts, long-range trends,
   export and home-screen widget are post-MVP — do not pull them forward.
 
-## Stack
-- Kotlin, Jetpack Compose, single Android module.
-- `androidx.health.connect:connect-client` (current stable — verify version).
-- No server component.
+## Stack (see IMPLEMENTATION_PLAN.md §3 for pinned versions)
+- Kotlin, Jetpack Compose Material 3, single Gradle module.
+- `androidx.health.connect:connect-client` 1.1.0 stable — not the 1.2.0 alphas.
+- Package id `hu.galambos.healthy`. minSdk 34, compile/target 36.
+- DataStore Preferences for settings. **No database** — Health Connect is the
+  database; a local mirror would only buy a cache-invalidation problem.
+- No server component, no DI framework, no chart library (Compose `Canvas`).
+- React Native was considered and rejected: Health Connect is Android-only, so
+  there is no cross-platform win, and the RN wrapper covers ~40 of 62 types.
+
+## Architecture (see IMPLEMENTATION_PLAN.md §4)
+- Everything derives from one `MetricDescriptor` registry: the permission set,
+  the read strategy, and the dashboard cards. Adding a data type is one row
+  there — never a new hand-written card.
+- `HealthRepository` is the stable interface; `data/hc/` is the only package
+  allowed to know the Health Connect SDK. A `FakeRepository` backs previews
+  and unit tests, because an emulator has no real health data to read.
+- Reading all data over long ranges only works via the aggregate APIs. Raw
+  `readRecords` is for the latest record only (source app + timestamp).
+
+## Target device
+Xiaomi 14T Pro on Android 16. Health Connect is in-platform (Android 14+), so
+the legacy "install Health Connect from Play" path does not exist here.
+Reading other apps' data past 30 days requires `READ_HEALTH_DATA_HISTORY`,
+requested on first run — see IMPLEMENTATION_PLAN.md §5.
 
 ## Local environment (verified)
 - Android Studio: `C:\Program Files\Android\Android Studio` (build 2026.1).
@@ -52,8 +80,8 @@ into one screen. See the brief for the metric list.
   part of the work product).
 
 ## Not decided yet (ask, don't assume)
-- App name and package id.
 - Whether the project stays under `C:\xampp\htdocs` or moves out of the
   XAMPP web root.
+- The four items in IMPLEMENTATION_PLAN.md §11.
 - Build/lint/test commands: no Gradle project exists yet. Fill this file's
   command section in once the scaffold is generated — do not invent them.

@@ -1,0 +1,535 @@
+A javasolt design irány
+1. Alapkoncepció: „Personal Health Console”
+
+Nem klasszikus fitness appot csinálnék.
+
+Nem cél:
+
+gamification
+challenge-ek
+badge-ek
+túl sok motivációs szöveg
+nagy piros figyelmeztetések
+Apple Health másolat
+
+Hanem egyfajta:
+
+személyes egészségügyi adatközpont
+
+Az alkalmazás érzete legyen:
+
+megbízható
+nyugodt
+technikailag modern
+prémium
+gyors
+adatközpontú
+sallangmentes
+
+Ez különösen jól illik ahhoz, hogy az app nem maga gyűjti az adatokat, hanem a Health Connectből egységesen jeleníti meg őket.
+
+2. Vizuális stílus
+Design nyelv
+
+Material 3 / Material You alapú, de nem a teljesen alapértelmezett Android UI kinézettel.
+
+A cél:
+
+natív Android appnak érződjön, de legyen saját karaktere.
+
+Fő jellemzők
+16–24 dp lekerekített sarkok
+visszafogott elevation
+nagy számok
+kevés szöveg
+finom chartok
+erős tipográfiai hierarchia
+sok whitespace
+kis méretű, informatív data source badge-ek
+
+A modern Android/Material irány különösen jól működik adatgazdag dashboardoknál, ha nem minden elem kap azonos vizuális súlyt.
+
+3. Színrendszer
+
+Nem használnék túl sok élénk színt.
+
+A háttér maradjon semleges, és a metrikák kapjanak saját accent színt.
+
+Metrika	Színirány
+Lépésszám	Zöld
+Pulzus	Piros
+Alvás	Lila / Indigó
+SpO₂	Türkiz
+Kalória	Narancs
+Testsúly	Kék
+Light mode
+Background: #F7F7F3
+Surface: #FFFFFF
+Text primary: #202124
+Text secondary: #6B7078
+Dark mode
+Background: #121417
+Surface: #1B1F24
+Elevated card: #23272D
+Primary text: #F5F7FA
+Accent színek
+Steps      #4CAF50
+Heart      #E53935
+Sleep      #6C5CE7
+SpO₂       #20A4B8
+Calories   #F57C00
+Weight     #2F80ED
+
+Fontos: ezek ne töltsék ki a teljes kártyát. Inkább:
+
+ikon
+mini chart
+kis trend indicator
+progress line
+
+kapja a színt.
+
+4. Főképernyő – Information Architecture
+
+A főképernyő legyen vertikálisan görgethető.
+
+Sorrend
+Header
+Good morning, Ádám
+
+Here's your health overview
+
+Saturday, August 29
+
+Jobb oldalon:
+
+dátumválasztó
+esetleg refresh ikon
+Mai összegzés
+
+A legfontosabb három adat:
+
+┌───────────┐ ┌───────────┐ ┌───────────┐
+│ 👣        │ │ 🌙        │ │ ❤️        │
+│ 8,421     │ │ 7h 42m    │ │ 72 bpm    │
+│ Steps     │ │ Sleep     │ │ Heart     │
+│ +12%      │ │ +0h 20m   │ │ Resting   │
+└───────────┘ └───────────┘ └───────────┘
+
+Ez legyen a „quick glance” rész.
+
+Nem kell minden adatot ide tenni.
+
+5. Metric grid
+
+Ez az alkalmazás fő része.
+
+2 oszlopos kártyarendszer
+┌────────────────┐ ┌────────────────┐
+│ ❤️ Pulzus      │ │ 👣 Lépésszám   │
+│                │ │                │
+│ 72 bpm         │ │ 8,421          │
+│                │ │                │
+│ ▂▃▂▅▃▆▅▃       │ │ ▂▅▃▆▇▅▆▂       │
+│                │ │                │
+│ 08:42          │ │ 08:45          │
+│ Mi Fitness     │ │ Mi Fitness     │
+└────────────────┘ └────────────────┘
+
+┌────────────────┐ ┌────────────────┐
+│ 🌙 Alvás       │ │ 🫁 SpO₂        │
+│ 7h 42m         │ │ 98%            │
+│ ▂▃▆▇▅▃▂       │ │ ▃▅▅▆▅▃▅        │
+│ Mi Fitness     │ │ Mi Fitness     │
+└────────────────┘ └────────────────┘
+
+Minden metric cardnak ugyanaz a struktúrája.
+
+Card anatomy
+ikon + metric neve
+aktuális érték
+egység
+mini trend
+utolsó frissítés
+adatforrás
+
+Ez nagyon fontos, mert a briefben is szerepel, hogy minden adatnál látszódjon a data origin és timestamp.
+
+6. Data source design
+
+Szerintem ez legyen az app egyik karakteres eleme.
+
+Például:
+
+● Mi Fitness
+Updated 08:42
+
+A „source” ne legyen túl nagy.
+
+Egy kis colored dot + source name:
+
+● Mi Fitness
+● Zepp Life
+● Google Fit
+
+Ha több forrásból van adat:
+
+Sources
+
+Mi Fitness
+Last sync 08:42
+
+Zepp Life
+Last sync yesterday 07:20
+
+Google Fit
+Last sync 08:45
+
+Ez külön képernyőt is kaphat.
+
+7. Metric Detail Screen
+
+Ha rányomsz például az Alvásra:
+
+Header
+← Sleep
+
+Last night
+Nagy érték
+7h 42m
+
+Alatta:
+
++20 min compared to 7-day average
+Fő grafikon
+
+Nagy, egyszerű chart.
+
+Alvás esetén:
+
+Awake     ────      ──
+REM       ░░░░░░
+Light     █████████████
+Deep          ████
+
+A brief alapján az alvásfázisok csak akkor jelenjenek meg, ha az adat ténylegesen elérhető.
+
+Period selector
+[ 7 Days ] [ 30 Days ] [ 90 Days ]
+
+Az MVP-ben elég lehet:
+
+7 nap
+30 nap
+
+A 90 nap később.
+
+8. Trends screen
+
+Külön tab:
+
+Trends
+
+This week
+────────────────
+
+Weight
+78.4 kg
+↘ 0.3 kg
+
+▁▂▃▃▂▂▁
+
+Steps
+8,421 average
+
+▂▅▃▆▇▅▆
+
+Sleep
+7h 18m average
+
+▅▃▆▇▅▆▃
+
+Itt az összes metric egymás alatt jelenik meg.
+
+Ez nem „deep analytics”, hanem gyors összehasonlítás.
+
+9. Források képernyő
+
+Ez szerintem nagyon hasznos lenne.
+
+Data Sources
+Health Connect sources
+Mi Fitness
+Mi Fitness
+
+✓ Steps
+✓ Heart rate
+✓ Sleep
+✓ SpO₂
+✓ Calories
+
+Last updated
+Today, 08:42
+Zepp Life
+Zepp Life
+
+✓ Weight
+
+Last updated
+Yesterday, 07:20
+Google Fit
+Google Fit
+
+✓ Weight
+✓ Activity
+
+Last updated
+Today, 08:45
+
+Ez segít megérteni:
+
+„Miért nincs itt a testzsír adatom?”
+
+Mert látható lesz, hogy az adott forrás nem írja be a Health Connectbe.
+
+Ez közvetlenül kapcsolódik az alkalmazás egyik alapvető korlátjához: csak az jeleníthető meg, ami ténylegesen bekerült a Health Connectbe.
+
+10. Permission onboarding
+
+Ez legyen nagyon egyszerű.
+
+Screen 1
+Your health data.
+In one place.
+
+Health Connect Dashboard reads
+your health information locally
+from Health Connect.
+
+Alatta három ikon:
+
+🔒 Private
+
+📱 On your device
+
+👁 Read-only
+
+CTA:
+
+Continue
+Screen 2
+Allow access
+
+The app needs permission
+to read:
+
+✓ Weight
+✓ Sleep
+✓ Heart rate
+✓ SpO₂
+✓ Calories
+✓ Steps
+
+CTA:
+
+Grant permissions
+
+Fontos vizuálisan is hangsúlyozni:
+
+No cloud
+No account
+No tracking
+Read-only
+
+Ez nagyon jó „trust message” az alkalmazás identitásához.
+
+11. Bottom navigation
+
+Én 4 tabot használnék:
+
+⌂ Overview
+
+▥ Trends
+
+◉ Sources
+
+⚙ Settings
+Overview
+
+Mai dashboard.
+
+Trends
+
+7 / 30 napos trendek.
+
+Sources
+
+Health Connect adatforrások.
+
+Settings
+
+App beállítások.
+
+12. Settings
+
+Egyszerű legyen.
+
+Settings
+
+Appearance
+○ System
+○ Light
+○ Dark
+
+Units
+
+Weight
+kg
+
+Height
+cm
+
+Distance
+km
+
+Data
+
+Refresh data
+
+Health Connect permissions
+
+About
+
+Health Connect Dashboard
+Version 1.0
+13. Tipográfia
+
+Androidon én:
+
+Font
+
+Roboto / rendszerfont
+
+vagy
+
+Inter
+
+A Roboto jobban illik a natív Android érzéshez.
+
+Hierarchia
+Display metric
+32–40sp
+Bold
+
+Screen title
+24sp
+SemiBold
+
+Section title
+16sp
+SemiBold
+
+Metric title
+14sp
+Medium
+
+Metadata
+12sp
+Regular
+
+A számok legyenek nagyon hangsúlyosak.
+
+Például:
+
+72
+bpm
+
+A 72 sokkal nagyobb legyen, mint a bpm.
+
+14. Animációk
+
+Ne legyen túl sok.
+
+Dashboard load
+
+Finom fade + stagger:
+
+Header
+↓
+Summary cards
+↓
+Metric cards
+Chart
+
+Finoman rajzolódjon ki.
+
+Pull to refresh
+
+Material 3 natív animáció.
+
+Metric click
+
+Shared transition jellegű expandálás.
+
+A modern egészség- és fitness appoknál a visszafogott mikroanimációk sokat javíthatnak a „premium” érzeten anélkül, hogy túlzsúfolttá tennék az UI-t.
+
+15. Amit direkt kerülnék
+
+❌ túl sok kördiagram
+❌ minden metric más színű háttérrel
+❌ túl sok gradient
+❌ glassmorphism mindenhol
+❌ túl sok emoji
+❌ „You are doing amazing!” típusú szövegek
+❌ gamification
+❌ túl sok adat egyszerre
+❌ orvosi diagnózisra utaló vizuális elemek
+
+Ez egy:
+
+personal data dashboard
+
+és nem:
+
+fitness social app
+medical diagnostic system
+wellness influencer app
+
+Az első generált design board
+
+Az elkészített koncepcióban szerepel:
+
+Light mode dashboard
+Dark mode dashboard
+2 oszlopos metric grid
+Sleep detail screen
+Trends screen
+Data Sources screen
+Health Connect permission screen
+Settings screen
+színpaletta
+tipográfia
+ikonrendszer
+komponenspéldák
+
+A legerősebb iránynak ezt érzem a projektedhez:
+
+Clean Material Health Dashboard — light/dark mode, data-first, premium but native Android
+
+Ez egyébként technikailag is jól illeszthető a briefedben szereplő Jetpack Compose + Material 3 megközelítéshez.
+
+Következő lépés
+
+Szerintem most érdemes lenne külön-külön high-fidelity képeket generálni, nem csak egy összesítő design boardot.
+
+Én ezt a sorrendet javaslom:
+
+Főképernyő Light Mode – pixel perfect
+Főképernyő Dark Mode
+Sleep detail screen
+Heart Rate detail screen
+Trends screen
+Onboarding + Health Connect permission flow
+Teljes Figma-szerű design system
+
+Ha szeretnéd, a következő körben megcsinálhatjuk úgy, hogy egy konkrét, végleges vizuális irányt választunk, és abból generálok egy komplett, egymással konzisztens 6–8 képernyős app design csomagot.
