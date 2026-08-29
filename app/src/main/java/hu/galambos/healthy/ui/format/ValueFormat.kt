@@ -4,7 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale as ComposeLocale
 import hu.galambos.healthy.R
+import hu.galambos.healthy.data.settings.DistanceUnit
+import hu.galambos.healthy.data.settings.MassUnit
 import hu.galambos.healthy.domain.metric.MetricUnit
+import hu.galambos.healthy.ui.settings.LocalSettings
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -19,9 +22,32 @@ import kotlin.math.roundToInt
  */
 data class FormattedValue(val number: String, val unit: String)
 
+private const val POUNDS_PER_KILOGRAM = 2.2046226
+private const val MILES_PER_KILOMETRE = 0.6213712
+
+/**
+ * Values are carried in metric units everywhere inside the app and converted
+ * only here, at the point of display. Converting earlier would mean two
+ * readings of the same thing could never be compared.
+ */
 @Composable
 fun formatValue(value: Double, unit: MetricUnit): FormattedValue {
     val locale = currentLocale()
+    val settings = LocalSettings.current
+
+    if (unit == MetricUnit.Kilograms && settings.mass == MassUnit.Pounds) {
+        return FormattedValue(
+            number = formatNumber(value * POUNDS_PER_KILOGRAM, 1, locale),
+            unit = stringResource(R.string.settings_unit_lb),
+        )
+    }
+    if (unit == MetricUnit.Kilometres && settings.distance == DistanceUnit.Miles) {
+        return FormattedValue(
+            number = formatNumber(value * MILES_PER_KILOMETRE, 2, locale),
+            unit = stringResource(R.string.settings_unit_mi),
+        )
+    }
+
     return when (unit) {
         // Hours are read as hours and minutes, never as 7.7 of something.
         MetricUnit.Hours -> {

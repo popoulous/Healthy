@@ -38,6 +38,9 @@ android {
 
     buildFeatures {
         compose = true
+        // The about screen shows the version, which is where BuildConfig
+        // comes from; AGP leaves it off by default.
+        buildConfig = true
     }
 
     lint {
@@ -76,6 +79,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.health.connect.client)
 
     testImplementation(libs.junit)

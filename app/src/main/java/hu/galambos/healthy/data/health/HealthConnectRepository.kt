@@ -52,15 +52,21 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
      * Re-read whenever access is checked, then reused while a dashboard load
      * runs. Asking Health Connect once per metric would cost a round trip per
      * card for an answer that cannot change mid-load.
+     *
+     * Null means "never asked", which is not the same as "nothing granted" —
+     * the dashboard starts loading at the same moment the access check does,
+     * and treating the empty cache as an answer showed every card as refused.
      */
     @Volatile
-    private var cachedGranted: Set<String> = emptySet()
+    private var cachedGranted: Set<String>? = null
 
     override suspend fun grantedPermissions(): Set<String> {
         val granted = client?.permissionController?.getGrantedPermissions().orEmpty()
         cachedGranted = granted
         return granted
     }
+
+    private suspend fun granted(): Set<String> = cachedGranted ?: grantedPermissions()
 
     override suspend fun historyAccess(): HistoryAccess = when {
         !isHistorySupported() -> HistoryAccess.Unsupported
@@ -75,7 +81,7 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
     ): MetricSummary {
         val client = client
             ?: return MetricSummary(descriptor.id, LoadState.NotGranted)
-        if (HealthPermission.getReadPermission(descriptor.recordType) !in cachedGranted) {
+        if (HealthPermission.getReadPermission(descriptor.recordType) !in granted()) {
             return MetricSummary(descriptor.id, LoadState.NotGranted)
         }
 
@@ -83,9 +89,14 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
         return try {
             val latest = reader.readLatest(descriptor, window)
             val trend = reader.readTrend(descriptor, window)
-            if (latest == null && trend.none { it.value != null }) {
+            if (latest == null) {
                 // Permission held, nothing written: a source app that does not
                 // share this type. Saying so is the point of the Sources screen.
+                //
+                // The absence of a newest record decides this, not the trend:
+                // the aggregate API happily returns zero-valued buckets for
+                // days nothing happened, and reading those as data produced
+                // cards that claimed a reading and then had none to show.
                 MetricSummary(descriptor.id, LoadState.Empty, trend = trend)
             } else {
                 MetricSummary(descriptor.id, LoadState.Loaded, latest, trend)
@@ -106,7 +117,7 @@ class HealthConnectRepository(private val context: Context) : HealthRepository {
 
     override suspend fun loadSleepNight(): SleepNight? {
         val client = client ?: return null
-        if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in cachedGranted) {
+        if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in granted()) {
             return null
         }
         return try {

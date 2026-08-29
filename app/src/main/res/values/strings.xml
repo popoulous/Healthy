@@ -93,9 +93,9 @@
     <string name="window_month">30 days</string>
 
     <string name="greeting_morning">Good morning</string>
+    <string name="greeting_named">%1$s, %2$s</string>
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
-    <string name="coming_soon">Being built. The dashboard comes first.</string>
 
     <string name="metric_distance">Distance</string>
     <string name="metric_elevation">Elevation gained</string>
@@ -162,4 +162,27 @@
     <string name="trends_title">Trends</string>
     <string name="trends_empty">Nothing to compare yet.</string>
     <string name="back">Back</string>
+
+    <string name="sources_empty">Nothing has been read yet, so there is nothing to attribute.</string>
+    <string name="sources_explanation">Built from what was actually read. Health Connect will not say in advance which app writes which type — a metric missing here means its source never shared it.</string>
+    <string name="sources_last_write">Last written %1$s</string>
+
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_units">Units</string>
+    <string name="settings_unit_lb">lb</string>
+    <string name="settings_unit_mi">mi</string>
+    <string name="settings_greeting">Greeting</string>
+    <string name="settings_name">Your name</string>
+    <string name="settings_name_explanation">Health Connect holds no name. Leave this empty and the greeting simply has none.</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_refresh">Refresh now</string>
+    <string name="settings_permissions">Health Connect permissions</string>
+    <string name="settings_history_granted">Access beyond 30 days is granted.</string>
+    <string name="settings_history_not_granted">Only the last 30 days are readable. Access beyond that can be granted in Health Connect.</string>
+    <string name="settings_history_unsupported">This phone\'s Health Connect cannot grant access beyond 30 days.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
 </resources>

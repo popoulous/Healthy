@@ -23,6 +23,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.R
 import hu.galambos.healthy.data.fake.FakeHealthRepository
+import hu.galambos.healthy.data.settings.DistanceUnit
+import hu.galambos.healthy.data.settings.MassUnit
+import hu.galambos.healthy.data.settings.Settings
+import hu.galambos.healthy.data.settings.ThemeChoice
+import hu.galambos.healthy.domain.HistoryAccess
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.domain.metric.MetricRegistry
 import hu.galambos.healthy.domain.summary.TrendWindow
@@ -42,6 +47,13 @@ fun HealthyApp(
     modifier: Modifier = Modifier,
     onGrantRequested: (() -> Unit)? = null,
     onDetailOpened: (MetricId) -> Unit = {},
+    settings: Settings = Settings(),
+    historyAccess: HistoryAccess = HistoryAccess.Unsupported,
+    onThemeChange: (ThemeChoice) -> Unit = {},
+    onMassChange: (MassUnit) -> Unit = {},
+    onDistanceChange: (DistanceUnit) -> Unit = {},
+    onNameChange: (String) -> Unit = {},
+    onRefresh: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableStateOf(Destination.Overview) }
 
@@ -120,8 +132,18 @@ fun HealthyApp(
                 onMetricClick = openDetail,
             )
 
-            Destination.Sources -> SourcesScreen(contentModifier)
-            Destination.Settings -> SettingsScreen(contentModifier)
+            Destination.Sources -> SourcesScreen(dashboard, contentModifier)
+
+            Destination.Settings -> SettingsScreen(
+                settings = settings,
+                historyAccess = historyAccess,
+                onThemeChange = onThemeChange,
+                onMassChange = onMassChange,
+                onDistanceChange = onDistanceChange,
+                onNameChange = onNameChange,
+                onRefresh = onRefresh,
+                modifier = contentModifier,
+            )
         }
     }
 }

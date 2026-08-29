@@ -34,6 +34,7 @@ import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.TrendWindow
 import hu.galambos.healthy.ui.components.MetricCard
 import hu.galambos.healthy.ui.components.SummaryTile
+import hu.galambos.healthy.ui.settings.LocalSettings
 import hu.galambos.healthy.ui.theme.HealthyTheme
 import java.time.LocalDate
 import java.time.LocalTime
@@ -123,8 +124,14 @@ private fun Header() {
         LocalTime.now().hour < 18 -> R.string.greeting_afternoon
         else -> R.string.greeting_evening
     }
+    val name = LocalSettings.current.name
+    val line = if (name.isBlank()) {
+        stringResource(greeting)
+    } else {
+        stringResource(R.string.greeting_named, stringResource(greeting), name)
+    }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(text = stringResource(greeting), style = MaterialTheme.typography.headlineMedium)
+        Text(text = line, style = MaterialTheme.typography.headlineMedium)
         Text(
             text = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(LocalDate.now()),
             style = MaterialTheme.typography.labelSmall,

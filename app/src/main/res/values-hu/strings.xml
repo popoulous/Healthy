@@ -84,9 +84,9 @@
     <string name="window_month">30 nap</string>
 
     <string name="greeting_morning">Jó reggelt</string>
+    <string name="greeting_named">%1$s, %2$s!</string>
     <string name="greeting_afternoon">Szép napot</string>
     <string name="greeting_evening">Jó estét</string>
-    <string name="coming_soon">Készül. Előbb a dashboard.</string>
 
     <string name="metric_distance">Távolság</string>
     <string name="metric_elevation">Szintemelkedés</string>
@@ -153,4 +153,27 @@
     <string name="trends_title">Trendek</string>
     <string name="trends_empty">Még nincs mit összehasonlítani.</string>
     <string name="back">Vissza</string>
+
+    <string name="sources_empty">Még nem olvastunk be semmit, így nincs mit forráshoz kötni.</string>
+    <string name="sources_explanation">Abból épül, amit ténylegesen beolvastunk. A Health Connect nem mondja meg előre, melyik app melyik típust írja — ami itt hiányzik, azt a forrása nem osztotta meg.</string>
+    <string name="sources_last_write">Utoljára írt: %1$s</string>
+
+    <string name="settings_appearance">Megjelenés</string>
+    <string name="settings_theme_system">Rendszer</string>
+    <string name="settings_theme_light">Világos</string>
+    <string name="settings_theme_dark">Sötét</string>
+    <string name="settings_units">Mértékegységek</string>
+    <string name="settings_unit_lb">font</string>
+    <string name="settings_unit_mi">mérföld</string>
+    <string name="settings_greeting">Megszólítás</string>
+    <string name="settings_name">A neved</string>
+    <string name="settings_name_explanation">A Health Connect nem tárol nevet. Ha üresen hagyod, a megszólítás egyszerűen név nélkül marad.</string>
+    <string name="settings_data">Adatok</string>
+    <string name="settings_refresh">Frissítés most</string>
+    <string name="settings_permissions">Health Connect engedélyek</string>
+    <string name="settings_history_granted">A 30 napnál régebbi adatokhoz van hozzáférés.</string>
+    <string name="settings_history_not_granted">Csak az elmúlt 30 nap olvasható. A régebbi adatokhoz a Health Connectben adható hozzáférés.</string>
+    <string name="settings_history_unsupported">Ezen a telefonon a Health Connect nem tud 30 napnál régebbi hozzáférést adni.</string>
+    <string name="settings_about">Névjegy</string>
+    <string name="settings_version">Verzió %1$s</string>
 </resources>

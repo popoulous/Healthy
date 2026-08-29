@@ -19,6 +19,7 @@ import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.ui.onboarding.OnboardingScreen
 import hu.galambos.healthy.ui.overview.DashboardViewModel
+import hu.galambos.healthy.ui.settings.SettingsViewModel
 import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
 
 /**
@@ -33,10 +34,12 @@ import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
 fun HealthyRoot(
     viewModel: AppViewModel,
     dashboardViewModel: DashboardViewModel,
+    settingsViewModel: SettingsViewModel,
     modifier: Modifier = Modifier,
 ) {
     val access by viewModel.access.collectAsStateWithLifecycle()
     val dashboard by dashboardViewModel.state.collectAsStateWithLifecycle()
+    val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccess()
@@ -84,6 +87,13 @@ fun HealthyRoot(
             onDetailOpened = { id ->
                 if (id == MetricId.Sleep) dashboardViewModel.loadSleepNight()
             },
+            settings = settings,
+            historyAccess = access.historyAccess,
+            onThemeChange = { settingsViewModel.setTheme(it) },
+            onMassChange = { settingsViewModel.setMassUnit(it) },
+            onDistanceChange = { settingsViewModel.setDistanceUnit(it) },
+            onNameChange = { settingsViewModel.setName(it) },
+            onRefresh = { dashboardViewModel.load(force = true) },
         )
     }
 }
