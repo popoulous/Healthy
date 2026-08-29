@@ -214,4 +214,7 @@
 
     <string name="source_scale">Mi Body Composition Scale 2</string>
     <string name="sleep_stage_awake">Awake</string>
+
+    <string name="chart_expand">Show the chart full screen</string>
+    <string name="chart_collapse">Close</string>
 </resources>

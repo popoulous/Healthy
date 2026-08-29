@@ -27,8 +27,10 @@ import hu.galambos.healthy.domain.sleep.SleepNight
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
 import hu.galambos.healthy.domain.summary.TrendWindow
+import hu.galambos.healthy.domain.summary.headlineValue
 import hu.galambos.healthy.domain.summary.stats
 import hu.galambos.healthy.ui.components.MessageScreen
+import hu.galambos.healthy.ui.components.ExpandableChart
 import hu.galambos.healthy.ui.components.Sparkline
 import hu.galambos.healthy.ui.components.rememberSourceLabel
 import hu.galambos.healthy.ui.components.sparklineStyleFor
@@ -77,14 +79,18 @@ fun MetricDetailScreen(
         Headline(descriptor, summary, window)
         WindowSelector(window, onWindowChange)
 
-        Sparkline(
-            buckets = summary.trend,
-            color = colorOf(descriptor.accent),
-            style = sparklineStyleFor(descriptor.unit),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-        )
+        ExpandableChart(title = stringResource(descriptor.titleRes)) { expanded ->
+            Sparkline(
+                buckets = summary.trend,
+                color = colorOf(descriptor.accent),
+                style = sparklineStyleFor(descriptor.unit),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // Full screen the same window gets room for its detail;
+                    // in the page it stays a glance.
+                    .height(if (expanded) 360.dp else 140.dp),
+            )
+        }
 
         Statistics(descriptor, summary)
 
@@ -119,7 +125,10 @@ private fun Headline(
     window: TrendWindow,
 ) {
     val latest = summary.latest ?: return
-    val formatted = formatValue(latest.value, descriptor.unit)
+    val formatted = formatValue(
+        summary.headlineValue(descriptor) ?: latest.value,
+        descriptor.unit,
+    )
     val stats = summary.trend.stats()
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

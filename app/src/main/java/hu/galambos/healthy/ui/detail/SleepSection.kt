@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -23,6 +22,7 @@ import hu.galambos.healthy.domain.sleep.SleepNight
 import hu.galambos.healthy.domain.sleep.SleepScore
 import hu.galambos.healthy.domain.sleep.SleepStage
 import hu.galambos.healthy.ui.components.Hypnogram
+import hu.galambos.healthy.ui.components.ExpandableChart
 import hu.galambos.healthy.ui.components.StageDonut
 import hu.galambos.healthy.ui.format.formatTimestamp
 import hu.galambos.healthy.ui.theme.sleepStageColor
@@ -57,12 +57,13 @@ fun SleepSection(night: SleepNight, modifier: Modifier = Modifier) {
 
         Score(night)
 
-        Hypnogram(
-            night = night,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-        )
+        ExpandableChart(title = stringResource(R.string.metric_sleep)) { expanded ->
+            Hypnogram(
+                night = night,
+                modifier = Modifier.fillMaxWidth(),
+                expanded = expanded,
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
