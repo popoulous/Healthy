@@ -17,6 +17,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -119,11 +124,10 @@ fun SettingsScreen(
 
         item {
             Section(stringResource(R.string.settings_greeting)) {
-                OutlinedTextField(
+                TextField(
+                    label = stringResource(R.string.settings_name),
                     value = settings.name,
-                    onValueChange = onNameChange,
-                    label = { Text(stringResource(R.string.settings_name)) },
-                    singleLine = true,
+                    onChange = onNameChange,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 // Health Connect holds no name, so there is nowhere else this
@@ -231,6 +235,11 @@ fun SettingsScreen(
 /**
  * A number the user types. Empty rather than zero when unset: a height of nought
  * is not a measurement, and showing it as one invites leaving it there.
+ *
+ * The text is held here rather than derived from [value] on every frame. Sending
+ * an Int out and taking it back in means the string is rebuilt each keystroke,
+ * and a rebuilt string carries no cursor — which put the caret back to the
+ * front after every character typed.
  */
 @Composable
 private fun NumberField(
@@ -239,14 +248,52 @@ private fun NumberField(
     onChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var text by rememberSaveable { mutableStateOf(if (value > 0) value.toString() else "") }
+
+    // Only follow the stored value when it says something this field did not:
+    // the first load, or an edit made elsewhere. Following it while typing is
+    // what moved the cursor.
+    LaunchedEffect(value) {
+        if ((text.toIntOrNull() ?: 0) != value) {
+            text = if (value > 0) value.toString() else ""
+        }
+    }
+
     OutlinedTextField(
-        value = if (value > 0) value.toString() else "",
-        onValueChange = { text ->
-            onChange(text.filter { it.isDigit() }.take(4).toIntOrNull() ?: 0)
+        value = text,
+        onValueChange = { typed ->
+            text = typed.filter { it.isDigit() }.take(4)
+            onChange(text.toIntOrNull() ?: 0)
         },
         label = { Text(label) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier,
+    )
+}
+
+/** Same reasoning as [NumberField]: the text lives here, the value goes out. */
+@Composable
+private fun TextField(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var text by rememberSaveable { mutableStateOf(value) }
+
+    LaunchedEffect(value) {
+        if (text.trim() != value) text = value
+    }
+
+    OutlinedTextField(
+        value = text,
+        onValueChange = {
+            text = it
+            onChange(it)
+        },
+        label = { Text(label) },
+        singleLine = true,
         modifier = modifier,
     )
 }
