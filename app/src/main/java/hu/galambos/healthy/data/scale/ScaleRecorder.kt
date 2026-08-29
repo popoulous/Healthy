@@ -1,0 +1,109 @@
+package hu.galambos.healthy.data.scale
+
+import hu.galambos.healthy.data.local.HealthyDatabase
+import hu.galambos.healthy.data.local.MetricStore
+import hu.galambos.healthy.data.local.ScaleMeasurementEntity
+import hu.galambos.healthy.data.settings.Settings
+import hu.galambos.healthy.data.settings.Sex
+import hu.galambos.healthy.domain.metric.MetricId
+import hu.galambos.healthy.domain.scale.BodyComposition
+import hu.galambos.healthy.domain.scale.BodyCompositionCalculator
+import hu.galambos.healthy.domain.scale.BodyProfile
+import hu.galambos.healthy.domain.scale.ScaleReading
+import hu.galambos.healthy.domain.summary.DataPoint
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+
+/** Marks a reading as this app's own work rather than another app's record. */
+const val SCALE_SOURCE = "healthy.scale"
+
+/**
+ * Files a weigh-in.
+ *
+ * Only the raw pair — weight and impedance — is stored. Everything else is
+ * derived on the way in and can be derived again: correcting a height or a
+ * birth year re-runs every past measurement instead of leaving behind figures
+ * computed from a profile nobody remembers.
+ */
+class ScaleRecorder(
+    private val database: HealthyDatabase,
+    private val store: MetricStore,
+    private val zone: ZoneId = ZoneId.systemDefault(),
+) {
+
+    suspend fun record(reading: ScaleReading, settings: Settings) {
+        if (!reading.stabilised) return
+
+        val time = reading.measuredAt.atZone(zone).toInstant()
+        database.scaleDao().upsert(
+            ScaleMeasurementEntity(
+                timeEpochMillis = time.toEpochMilli(),
+                weightKg = reading.weightKg,
+                impedanceOhms = reading.impedanceOhms,
+            ),
+        )
+        derive(reading.weightKg, reading.impedanceOhms, time.atZone(zone).toLocalDate(), settings)
+    }
+
+    /**
+     * Recomputes every stored measurement. Called when the profile changes:
+     * the numbers depend on height, age and sex, so a corrected profile means
+     * the whole history was computed from the wrong person.
+     */
+    suspend fun recomputeAll(settings: Settings) {
+        database.scaleDao().all().forEach { measurement ->
+            derive(
+                weightKg = measurement.weightKg,
+                impedance = measurement.impedanceOhms,
+                date = Instant.ofEpochMilli(measurement.timeEpochMillis).atZone(zone).toLocalDate(),
+                settings = settings,
+            )
+        }
+    }
+
+    private suspend fun derive(
+        weightKg: Double,
+        impedance: Int?,
+        date: LocalDate,
+        settings: Settings,
+    ) {
+        // Weight is a measurement and always stands. Health Connect carries it
+        // too, through Zepp Life, so it is not written into the metric store
+        // from here — two sources for one number would only disagree about the
+        // timestamp.
+        val profile = settings.toProfile() ?: return
+        val composition = impedance?.let {
+            BodyCompositionCalculator.of(profile, weightKg, it)
+        } ?: return
+
+        composition.toValues().forEach { (id, value) ->
+            store.putDailyValues(id, mapOf(date to value))
+            store.putLatest(
+                id,
+                DataPoint(
+                    value = value,
+                    time = date.atStartOfDay(zone).toInstant(),
+                    sourcePackage = SCALE_SOURCE,
+                ),
+            )
+        }
+    }
+}
+
+private fun Settings.toProfile(): BodyProfile? {
+    if (heightCm <= 0 || birthYear <= 0) return null
+    return BodyProfile(
+        heightCm = heightCm,
+        ageYears = LocalDate.now().year - birthYear,
+        female = sex == Sex.Female,
+    )
+}
+
+private fun BodyComposition.toValues(): Map<MetricId, Double> = mapOf(
+    MetricId.BodyFat to fatPercent,
+    MetricId.BodyWaterMass to waterMassKg,
+    MetricId.BoneMass to boneMassKg,
+    MetricId.LeanBodyMass to muscleMassKg,
+    MetricId.BasalMetabolicRate to basalRateKcal,
+)

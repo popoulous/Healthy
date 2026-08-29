@@ -48,6 +48,10 @@ interface ScaleDao {
 
     @Query("SELECT * FROM scale_measurement ORDER BY timeEpochMillis DESC LIMIT 1")
     suspend fun latest(): ScaleMeasurementEntity?
+
+    /** Every measurement, for when a profile change invalidates the derived values. */
+    @Query("SELECT * FROM scale_measurement ORDER BY timeEpochMillis")
+    suspend fun all(): List<ScaleMeasurementEntity>
 }
 
 @Dao

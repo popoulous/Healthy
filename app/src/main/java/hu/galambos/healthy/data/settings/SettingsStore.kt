@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -17,12 +18,23 @@ enum class MassUnit { Kilograms, Pounds }
 
 enum class DistanceUnit { Kilometres, Miles }
 
+/** Needed by the body composition formula, and by nothing else. */
+enum class Sex { Male, Female }
+
 data class Settings(
     val theme: ThemeChoice = ThemeChoice.System,
     val mass: MassUnit = MassUnit.Kilograms,
     val distance: DistanceUnit = DistanceUnit.Kilometres,
     /** Used only for the greeting; the app cannot learn a name from anywhere else. */
     val name: String = "",
+    /**
+     * The scale measures weight and impedance; height, age and sex are what
+     * turn those into body composition. Zero means unset, and unset means the
+     * app shows a weight and declines to guess at the rest.
+     */
+    val heightCm: Int = 0,
+    val birthYear: Int = 0,
+    val sex: Sex = Sex.Male,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("settings")
@@ -38,6 +50,9 @@ class SettingsStore(private val context: Context) {
     private val massKey = stringPreferencesKey("mass_unit")
     private val distanceKey = stringPreferencesKey("distance_unit")
     private val nameKey = stringPreferencesKey("name")
+    private val heightKey = intPreferencesKey("height_cm")
+    private val birthYearKey = intPreferencesKey("birth_year")
+    private val sexKey = stringPreferencesKey("sex")
 
     val settings: Flow<Settings> = context.dataStore.data.map { preferences ->
         Settings(
@@ -46,6 +61,9 @@ class SettingsStore(private val context: Context) {
             distance = preferences[distanceKey]?.toEnum(DistanceUnit.entries)
                 ?: DistanceUnit.Kilometres,
             name = preferences[nameKey].orEmpty(),
+            heightCm = preferences[heightKey] ?: 0,
+            birthYear = preferences[birthYearKey] ?: 0,
+            sex = preferences[sexKey]?.toEnum(Sex.entries) ?: Sex.Male,
         )
     }
 
@@ -57,7 +75,17 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setName(name: String) = put(nameKey, name.trim())
 
+    suspend fun setHeightCm(height: Int) = putInt(heightKey, height)
+
+    suspend fun setBirthYear(year: Int) = putInt(birthYearKey, year)
+
+    suspend fun setSex(sex: Sex) = put(sexKey, sex.name)
+
     private suspend fun put(key: Preferences.Key<String>, value: String) {
+        context.dataStore.edit { it[key] = value }
+    }
+
+    private suspend fun putInt(key: Preferences.Key<Int>, value: Int) {
         context.dataStore.edit { it[key] = value }
     }
 }

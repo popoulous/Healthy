@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       Every read permission the registry can ask for, taken from the strings
@@ -38,6 +39,21 @@
     <uses-permission android:name="android.permission.health.READ_VO2_MAX" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
     <uses-permission android:name="android.permission.health.READ_WHEELCHAIR_PUSHES" />
+
+    <!--
+      For the scale, which broadcasts its measurement in the clear. The scan is
+      declared as never being used to derive location, so Android does not also
+      demand location access — asking for someone's whereabouts to read their
+      bathroom scale would sit badly next to a promise to send nothing anywhere.
+      Both are Android 12 and later; below that a scan requires location, and
+      the feature declines to offer itself rather than ask.
+    -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 
     <!--
       Everything this app shows is written by other apps, and those are readable

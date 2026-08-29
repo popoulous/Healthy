@@ -5,6 +5,9 @@ import android.content.pm.PackageManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import hu.galambos.healthy.R
+import hu.galambos.healthy.data.scale.SCALE_SOURCE
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -23,6 +26,9 @@ private val labelCache = ConcurrentHashMap<String, String>()
 @Composable
 fun rememberSourceLabel(packageName: String): String {
     val context = LocalContext.current
+    // Body composition comes from the scale itself rather than from an
+    // installed app, so there is no package for the system to name.
+    if (packageName == SCALE_SOURCE) return stringResource(R.string.source_scale)
     return remember(packageName) { resolveLabel(context, packageName) }
 }
 

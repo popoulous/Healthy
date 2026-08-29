@@ -19,6 +19,7 @@ import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.metric.MetricId
 import hu.galambos.healthy.ui.onboarding.OnboardingScreen
 import hu.galambos.healthy.ui.overview.DashboardViewModel
+import hu.galambos.healthy.ui.scale.ScaleViewModel
 import hu.galambos.healthy.ui.settings.SettingsViewModel
 import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
 
@@ -35,17 +36,22 @@ fun HealthyRoot(
     viewModel: AppViewModel,
     dashboardViewModel: DashboardViewModel,
     settingsViewModel: SettingsViewModel,
+    scaleViewModel: ScaleViewModel,
     modifier: Modifier = Modifier,
 ) {
     val access by viewModel.access.collectAsStateWithLifecycle()
     val dashboard by dashboardViewModel.state.collectAsStateWithLifecycle()
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+    val scale by scaleViewModel.state.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccess()
         // Throttled inside; coming back from Mi Fitness after a sync is the
         // normal way new data arrives.
         dashboardViewModel.refresh()
+        // Bluetooth can be switched off while the app is away, and the answer
+        // is only true at the moment it is asked.
+        scaleViewModel.refreshAvailability()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -94,6 +100,22 @@ fun HealthyRoot(
             onDistanceChange = { settingsViewModel.setDistanceUnit(it) },
             onNameChange = { settingsViewModel.setName(it) },
             onRefresh = { dashboardViewModel.refresh(force = true) },
+            scaleState = scale,
+            onHeightChange = {
+                settingsViewModel.setHeightCm(it)
+                scaleViewModel.recomputeFromProfile()
+            },
+            onBirthYearChange = {
+                settingsViewModel.setBirthYear(it)
+                scaleViewModel.recomputeFromProfile()
+            },
+            onSexChange = {
+                settingsViewModel.setSex(it)
+                scaleViewModel.recomputeFromProfile()
+            },
+            onScaleStart = scaleViewModel::startListening,
+            onScaleStop = scaleViewModel::stopListening,
+            onScalePermissionGranted = scaleViewModel::refreshAvailability,
         )
     }
 }

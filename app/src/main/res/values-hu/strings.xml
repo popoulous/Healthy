@@ -184,4 +184,25 @@
     <string name="header_date">%1$s, %2$s</string>
     <string name="header_subtitle">Íme a mai egészségügyi áttekintésed</string>
     <string name="window_quarter">90 nap</string>
+
+    <string name="settings_profile">A tested</string>
+    <string name="settings_profile_explanation">A mérleg súlyt és impedanciát mér. A magasság, a születési év és a nem az, amiből ezekből testösszetétel lesz — ezek nélkül a Healthy rögzíti a súlyt, és a többihez nem nyúl.</string>
+    <string name="settings_height">Magasság (cm)</string>
+    <string name="settings_birth_year">Születési év</string>
+    <string name="settings_sex_male">Férfi</string>
+    <string name="settings_sex_female">Nő</string>
+
+    <string name="settings_scale">Mérleg</string>
+    <string name="scale_start">Mérés indítása</string>
+    <string name="scale_stop">Leállítás</string>
+    <string name="scale_step_on">Állj rá a mérlegre, mezítláb. A Healthy figyel.</string>
+    <string name="scale_recorded">Rögzítve. A testösszetétel a dashboardon van.</string>
+    <string name="scale_needs_android12">A mérleg olvasásához Android 12 vagy újabb kell. Az alatt a Bluetooth-kereséshez az Android helyadat-engedélyt is kér, amit ez az app nem fog kérni.</string>
+    <string name="scale_no_bluetooth">Ezen a készüléken nincs Bluetooth LE rádió.</string>
+    <string name="scale_bluetooth_off">A Bluetooth ki van kapcsolva.</string>
+    <string name="scale_permission">A Healthynek engedély kell a közeli Bluetooth-eszközök figyeléséhez. Soha nem csatlakozik a mérleghez és nem küld neki semmit — a mérleg sugározza a mérést, a Healthy pedig hallja.</string>
+    <string name="scale_grant">Bluetooth engedélyezése</string>
+    <string name="scale_profile_missing">Töltsd ki fent a magasságot és a születési évet, különben csak a súly rögzül.</string>
+
+    <string name="source_scale">Mi Body Composition Scale 2</string>
 </resources>

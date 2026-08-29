@@ -12,6 +12,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.galambos.healthy.data.health.HealthConnectRepository
 import hu.galambos.healthy.data.local.HealthyDatabase
 import hu.galambos.healthy.data.local.MetricStore
+import hu.galambos.healthy.data.scale.ScaleRecorder
+import hu.galambos.healthy.data.scale.ScaleScanner
 import hu.galambos.healthy.data.sync.HealthSync
 import hu.galambos.healthy.data.settings.SettingsStore
 import hu.galambos.healthy.data.settings.ThemeChoice
@@ -19,6 +21,7 @@ import hu.galambos.healthy.ui.AppViewModel
 import hu.galambos.healthy.ui.HealthyRoot
 import hu.galambos.healthy.ui.overview.DashboardViewModel
 import hu.galambos.healthy.ui.settings.LocalSettings
+import hu.galambos.healthy.ui.scale.ScaleViewModel
 import hu.galambos.healthy.ui.settings.SettingsViewModel
 import hu.galambos.healthy.ui.theme.HealthyTheme
 
@@ -31,8 +34,11 @@ class MainActivity : ComponentActivity() {
         // a dependency injection framework.
         val repository = HealthConnectRepository(applicationContext)
         val settingsStore = SettingsStore(applicationContext)
-        val metricStore = MetricStore(HealthyDatabase.get(applicationContext))
+        val database = HealthyDatabase.get(applicationContext)
+        val metricStore = MetricStore(database)
         val sync = HealthSync(repository, metricStore)
+        val scanner = ScaleScanner(applicationContext)
+        val recorder = ScaleRecorder(database, metricStore)
 
         setContent {
             val settingsViewModel: SettingsViewModel =
@@ -54,6 +60,9 @@ class MainActivity : ComponentActivity() {
                             factory = DashboardViewModel.factory(repository, metricStore, sync),
                         ),
                         settingsViewModel = settingsViewModel,
+                        scaleViewModel = viewModel(
+                            factory = ScaleViewModel.factory(scanner, recorder, settingsStore),
+                        ),
                     )
                 }
             }

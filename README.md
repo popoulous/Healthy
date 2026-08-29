@@ -25,17 +25,48 @@ Healthy reads the store and puts it in one place.
   the night, and a sleep score.
 - Groups every reading by source app, so a missing metric is visibly a source
   that never shared it rather than a failure of this app.
+- **Reads the scale directly over Bluetooth**, because Zepp Life writes only
+  weight to Health Connect and keeps body fat, muscle, bone and water to
+  itself. The scale broadcasts weight and a raw impedance in the clear; the
+  composition is worked out here.
+- Keeps its own history, so a trend survives Health Connect's auto-delete —
+  which is the phone owner's setting, not this app's.
 
 ## What it does not do
 
 It never writes to Health Connect. It makes no network requests of any kind:
 no account, no cloud, no analytics, no crash reporting. Nothing it stores is
 included in a cloud backup or a device transfer. The dependency list is short
-on purpose — Compose, the Health Connect client, DataStore, Lifecycle — so that
-the claim is checkable rather than merely stated.
+on purpose — Compose, the Health Connect client, Room, DataStore, Lifecycle —
+so that the claim is checkable rather than merely stated.
 
-There is no database. Health Connect is the database; a copy would buy a cache
-to invalidate and nothing else. Preferences live in DataStore.
+It never talks *to* the scale either. There is no pairing and no connection:
+the scale broadcasts its measurement to the room and this app listens. The
+Bluetooth scan permission is declared `neverForLocation`, so Android does not
+also demand location access — and below Android 12, where a scan requires
+location regardless, the feature declines to offer itself rather than ask.
+
+Raw Health Connect records are not copied. Health Connect is their database,
+and syncing is incremental through its Changes API. What is stored locally is
+what the screen draws — a value per metric per day and the newest reading of
+each — plus the scale measurements, which have no home in Health Connect at
+all.
+
+## The body composition figures are computed here
+
+The scale weighs you and measures the impedance of a small current; it computes
+no body composition at all. Zepp Life works that out in software and shares
+only the weight.
+
+So this app works it out too, from the Mi Fit algorithm as reconstructed by the
+open-source community — the only published description of it. Expect small
+disagreements with what Zepp Life shows: the current formula is not public, and
+no amount of care here can close that gap. Only the raw weight and impedance
+are stored, so correcting your height or year of birth re-derives every past
+measurement rather than leaving behind figures computed for a different person.
+
+Height, year of birth and sex are needed for the formula. Without them the app
+records the weight and leaves the rest alone.
 
 ## The sleep score is ours
 
@@ -62,6 +93,8 @@ stages, there is no score at all rather than one invented from a duration.
   shows the last month.
 - Permissions are per type. Refusing some is normal; those metrics are simply
   left off the dashboard.
+- Reading the scale needs Android 12 or newer and a Mi Body Composition Scale 2
+  in range. It listens only while you ask it to, from the settings screen.
 
 ## Building
 

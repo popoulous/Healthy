@@ -9,6 +9,7 @@ import hu.galambos.healthy.data.settings.DistanceUnit
 import hu.galambos.healthy.data.settings.MassUnit
 import hu.galambos.healthy.data.settings.Settings
 import hu.galambos.healthy.data.settings.SettingsStore
+import hu.galambos.healthy.data.settings.Sex
 import hu.galambos.healthy.data.settings.ThemeChoice
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,12 @@ class SettingsViewModel(private val store: SettingsStore) : ViewModel() {
     fun setDistanceUnit(unit: DistanceUnit) = viewModelScope.launch { store.setDistanceUnit(unit) }
 
     fun setName(name: String) = viewModelScope.launch { store.setName(name) }
+
+    fun setHeightCm(height: Int) = viewModelScope.launch { store.setHeightCm(height) }
+
+    fun setBirthYear(year: Int) = viewModelScope.launch { store.setBirthYear(year) }
+
+    fun setSex(sex: Sex) = viewModelScope.launch { store.setSex(sex) }
 
     companion object {
         private const val STOP_TIMEOUT_MS = 5_000L

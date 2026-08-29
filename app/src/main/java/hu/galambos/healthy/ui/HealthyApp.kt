@@ -26,6 +26,7 @@ import hu.galambos.healthy.data.fake.FakeHealthRepository
 import hu.galambos.healthy.data.settings.DistanceUnit
 import hu.galambos.healthy.data.settings.MassUnit
 import hu.galambos.healthy.data.settings.Settings
+import hu.galambos.healthy.data.settings.Sex
 import hu.galambos.healthy.data.settings.ThemeChoice
 import hu.galambos.healthy.domain.HistoryAccess
 import hu.galambos.healthy.domain.metric.MetricId
@@ -35,6 +36,7 @@ import hu.galambos.healthy.ui.detail.MetricDetailScreen
 import hu.galambos.healthy.ui.navigation.Destination
 import hu.galambos.healthy.ui.overview.DashboardState
 import hu.galambos.healthy.ui.overview.OverviewScreen
+import hu.galambos.healthy.ui.scale.ScaleState
 import hu.galambos.healthy.ui.settings.SettingsScreen
 import hu.galambos.healthy.ui.sources.SourcesScreen
 import hu.galambos.healthy.ui.theme.HealthyTheme
@@ -54,6 +56,13 @@ fun HealthyApp(
     onDistanceChange: (DistanceUnit) -> Unit = {},
     onNameChange: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
+    scaleState: ScaleState = ScaleState(),
+    onHeightChange: (Int) -> Unit = {},
+    onBirthYearChange: (Int) -> Unit = {},
+    onSexChange: (Sex) -> Unit = {},
+    onScaleStart: () -> Unit = {},
+    onScaleStop: () -> Unit = {},
+    onScalePermissionGranted: () -> Unit = {},
 ) {
     var selected by rememberSaveable { mutableStateOf(Destination.Overview) }
 
@@ -144,6 +153,13 @@ fun HealthyApp(
                 onNameChange = onNameChange,
                 onRefresh = onRefresh,
                 modifier = contentModifier,
+                scaleState = scaleState,
+                onHeightChange = onHeightChange,
+                onBirthYearChange = onBirthYearChange,
+                onSexChange = onSexChange,
+                onScaleStart = onScaleStart,
+                onScaleStop = onScaleStop,
+                onScalePermissionGranted = onScalePermissionGranted,
             )
         }
     }

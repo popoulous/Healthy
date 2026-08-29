@@ -193,4 +193,25 @@
     <string name="header_date">%1$s, %2$s</string>
     <string name="header_subtitle">Here is your health today</string>
     <string name="window_quarter">90 days</string>
+
+    <string name="settings_profile">Your body</string>
+    <string name="settings_profile_explanation">The scale measures weight and impedance. Height, year of birth and sex are what turn those into body composition — without them Healthy records the weight and leaves the rest alone.</string>
+    <string name="settings_height">Height in cm</string>
+    <string name="settings_birth_year">Year of birth</string>
+    <string name="settings_sex_male">Male</string>
+    <string name="settings_sex_female">Female</string>
+
+    <string name="settings_scale">Scale</string>
+    <string name="scale_start">Take a measurement</string>
+    <string name="scale_stop">Stop</string>
+    <string name="scale_step_on">Step on the scale, barefoot. Healthy is listening.</string>
+    <string name="scale_recorded">Recorded. Body composition is on the dashboard.</string>
+    <string name="scale_needs_android12">Reading the scale needs Android 12 or newer. Below that, Android also requires location access for a Bluetooth scan, which this app will not ask for.</string>
+    <string name="scale_no_bluetooth">This device has no Bluetooth LE radio.</string>
+    <string name="scale_bluetooth_off">Bluetooth is off.</string>
+    <string name="scale_permission">Healthy needs permission to listen for nearby Bluetooth devices. It never connects to the scale and never sends anything to it — the scale broadcasts its measurement and Healthy hears it.</string>
+    <string name="scale_grant">Allow Bluetooth</string>
+    <string name="scale_profile_missing">Fill in your height and year of birth above, or only the weight will be recorded.</string>
+
+    <string name="source_scale">Mi Body Composition Scale 2</string>
 </resources>

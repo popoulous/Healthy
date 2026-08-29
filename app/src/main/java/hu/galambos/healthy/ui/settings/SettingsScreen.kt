@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -20,14 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import hu.galambos.healthy.BuildConfig
 import hu.galambos.healthy.R
 import hu.galambos.healthy.data.settings.DistanceUnit
 import hu.galambos.healthy.data.settings.MassUnit
 import hu.galambos.healthy.data.settings.Settings
+import hu.galambos.healthy.data.settings.Sex
 import hu.galambos.healthy.data.settings.ThemeChoice
 import hu.galambos.healthy.domain.HistoryAccess
+import hu.galambos.healthy.ui.scale.ScaleSection
+import hu.galambos.healthy.ui.scale.ScaleState
 import hu.galambos.healthy.ui.theme.HealthyTheme
 
 @Composable
@@ -40,6 +45,13 @@ fun SettingsScreen(
     onNameChange: (String) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
+    scaleState: ScaleState = ScaleState(),
+    onHeightChange: (Int) -> Unit = {},
+    onBirthYearChange: (Int) -> Unit = {},
+    onSexChange: (Sex) -> Unit = {},
+    onScaleStart: () -> Unit = {},
+    onScaleStop: () -> Unit = {},
+    onScalePermissionGranted: () -> Unit = {},
 ) {
     val context = LocalContext.current
 
@@ -125,6 +137,55 @@ fun SettingsScreen(
         }
 
         item {
+            Section(stringResource(R.string.settings_profile)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    NumberField(
+                        label = stringResource(R.string.settings_height),
+                        value = settings.heightCm,
+                        onChange = onHeightChange,
+                        modifier = Modifier.weight(1f),
+                    )
+                    NumberField(
+                        label = stringResource(R.string.settings_birth_year),
+                        value = settings.birthYear,
+                        onChange = onBirthYearChange,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                ChipRow(
+                    options = Sex.entries,
+                    selected = settings.sex,
+                    label = {
+                        stringResource(
+                            when (it) {
+                                Sex.Male -> R.string.settings_sex_male
+                                Sex.Female -> R.string.settings_sex_female
+                            },
+                        )
+                    },
+                    onSelect = onSexChange,
+                )
+                Text(
+                    text = stringResource(R.string.settings_profile_explanation),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        item {
+            Section(stringResource(R.string.settings_scale)) {
+                ScaleSection(
+                    state = scaleState,
+                    profileComplete = settings.heightCm > 0 && settings.birthYear > 0,
+                    onStart = onScaleStart,
+                    onStop = onScaleStop,
+                    onPermissionGranted = onScalePermissionGranted,
+                )
+            }
+        }
+
+        item {
             Section(stringResource(R.string.settings_data)) {
                 OutlinedButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.settings_refresh))
@@ -165,6 +226,29 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+/**
+ * A number the user types. Empty rather than zero when unset: a height of nought
+ * is not a measurement, and showing it as one invites leaving it there.
+ */
+@Composable
+private fun NumberField(
+    label: String,
+    value: Int,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = if (value > 0) value.toString() else "",
+        onValueChange = { text ->
+            onChange(text.filter { it.isDigit() }.take(4).toIntOrNull() ?: 0)
+        },
+        label = { Text(label) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier,
+    )
 }
 
 @Composable
