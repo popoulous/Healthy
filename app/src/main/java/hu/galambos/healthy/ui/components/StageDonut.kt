@@ -35,10 +35,25 @@ fun StageDonut(
 
     val order = listOf(SleepStage.Deep, SleepStage.Light, SleepStage.Rem, SleepStage.Sleeping)
     val byStage = night.byStage
-    val slices = order.mapNotNull { stage ->
+    val drawn = order.mapNotNull { stage ->
         val minutes = byStage[stage]?.toMinutes()?.toDouble() ?: return@mapNotNull null
-        if (minutes <= 0) null else stage to (minutes / asleepMinutes).toFloat()
+        if (minutes <= 0) null else stage to minutes
     }
+
+    /*
+     * The stages are shares of each other, not of the night.
+     *
+     * They need not add up to the time asleep — a source can leave stretches
+     * unclassified, and last night's came to ninety-eight per cent — and
+     * dividing by the night instead left the ring two per cent short. All of
+     * that shortfall lands in one place, where the last slice meets the first,
+     * so a single gap was five times wider than the others and looked like a
+     * mistake. The ring closes on what it draws; the share of the whole night
+     * is what the figures beside it are for.
+     */
+    val drawnMinutes = drawn.sumOf { (_, minutes) -> minutes }
+    if (drawnMinutes <= 0) return
+    val slices = drawn.map { (stage, minutes) -> stage to (minutes / drawnMinutes).toFloat() }
 
     // Stage colours come from the theme, so they must be read while still in
     // a composable — the Canvas draw scope is not one.
