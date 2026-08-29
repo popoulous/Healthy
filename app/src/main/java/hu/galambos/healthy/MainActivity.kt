@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.galambos.healthy.data.health.HealthConnectRepository
 import hu.galambos.healthy.ui.AppViewModel
 import hu.galambos.healthy.ui.HealthyRoot
+import hu.galambos.healthy.ui.overview.DashboardViewModel
 import hu.galambos.healthy.ui.theme.HealthyTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,7 +22,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HealthyTheme {
-                HealthyRoot(viewModel(factory = AppViewModel.factory(repository)))
+                HealthyRoot(
+                    viewModel = viewModel(factory = AppViewModel.factory(repository)),
+                    dashboardViewModel = viewModel(
+                        factory = DashboardViewModel.factory(repository),
+                    ),
+                )
             }
         }
     }

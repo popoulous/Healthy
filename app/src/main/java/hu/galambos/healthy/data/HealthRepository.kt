@@ -2,6 +2,9 @@ package hu.galambos.healthy.data
 
 import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.domain.HistoryAccess
+import hu.galambos.healthy.domain.metric.MetricDescriptor
+import hu.galambos.healthy.domain.summary.MetricSummary
+import hu.galambos.healthy.domain.summary.TrendWindow
 
 /**
  * The boundary between the app and Health Connect.
@@ -29,4 +32,12 @@ interface HealthRepository {
     suspend fun grantedPermissions(): Set<String>
 
     suspend fun historyAccess(): HistoryAccess
+
+    /**
+     * Reads one metric: the newest record for the headline value, and daily
+     * buckets for the trend. Never throws — a failure comes back as a state
+     * on the summary, because one metric failing must not take the dashboard
+     * down with it.
+     */
+    suspend fun loadSummary(descriptor: MetricDescriptor, window: TrendWindow): MetricSummary
 }

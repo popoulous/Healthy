@@ -77,4 +77,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.androidx.health.connect.client)
+
+    testImplementation(libs.junit)
 }

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import hu.galambos.healthy.domain.HealthConnectAvailability
 import hu.galambos.healthy.ui.onboarding.OnboardingScreen
+import hu.galambos.healthy.ui.overview.DashboardViewModel
 import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
 
 /**
@@ -28,11 +29,19 @@ import hu.galambos.healthy.ui.permissions.HealthConnectUnavailableScreen
  * leaves, changes something, and comes back expecting the app to know.
  */
 @Composable
-fun HealthyRoot(viewModel: AppViewModel, modifier: Modifier = Modifier) {
+fun HealthyRoot(
+    viewModel: AppViewModel,
+    dashboardViewModel: DashboardViewModel,
+    modifier: Modifier = Modifier,
+) {
     val access by viewModel.access.collectAsStateWithLifecycle()
+    val dashboard by dashboardViewModel.state.collectAsStateWithLifecycle()
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccess()
+        // Throttled inside; coming back from Mi Fitness after a sync is the
+        // normal way new data arrives.
+        dashboardViewModel.load()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -41,6 +50,7 @@ fun HealthyRoot(viewModel: AppViewModel, modifier: Modifier = Modifier) {
         // The result set is ignored on purpose: the repository is the single
         // source of truth for what is granted, and a partial grant is normal.
         viewModel.refreshAccess()
+        dashboardViewModel.load(force = true)
     }
 
     // Only HealthyApp brings a Scaffold, which handles its own insets. The
@@ -65,7 +75,12 @@ fun HealthyRoot(viewModel: AppViewModel, modifier: Modifier = Modifier) {
                 modifier = inset,
             )
 
-        else -> HealthyApp(modifier)
+        else -> HealthyApp(
+            dashboard = dashboard,
+            onWindowChange = dashboardViewModel::setWindow,
+            modifier = modifier,
+            onGrantRequested = { permissionLauncher.launch(access.required) },
+        )
     }
 }
 

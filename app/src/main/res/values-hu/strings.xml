@@ -48,4 +48,44 @@
     <string name="update_required_update">Health Connect frissítése</string>
     <string name="unavailable_no_store">Nincs a készüléken alkalmazásbolt, ahonnan telepíthető lenne.</string>
     <string name="retry">Újra</string>
+
+    <string name="unit_count">db</string>
+    <string name="unit_steps">lépés</string>
+    <string name="unit_bpm">bpm</string>
+    <string name="unit_percent">%</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_hours">óra</string>
+    <string name="unit_m">m</string>
+    <string name="unit_km">km</string>
+    <string name="unit_l">l</string>
+    <string name="unit_celsius">°C</string>
+    <string name="unit_mmol_l">mmol/l</string>
+    <string name="unit_mmhg">Hgmm</string>
+    <string name="unit_w">W</string>
+    <string name="unit_m_s">m/s</string>
+    <string name="unit_vo2">ml/kg/perc</string>
+    <string name="unit_minutes">perc</string>
+    <string name="unit_breaths">légvétel/perc</string>
+
+    <string name="duration_hours_minutes">%1$dó %2$dp</string>
+    <string name="timestamp_today">Ma %1$s</string>
+    <string name="timestamp_yesterday">Tegnap %1$s</string>
+
+    <string name="card_not_granted">Nincs engedély</string>
+    <string name="card_allow">Engedélyezés</string>
+    <string name="card_no_data">Nincs adat</string>
+    <string name="card_no_data_detail">Ezt még nem írta be semmi.</string>
+    <string name="card_failed">Nem sikerült beolvasni</string>
+    <string name="card_rate_limited">A Health Connect most terhelt. Próbáld újra egy pillanat múlva.</string>
+    <string name="card_history_limited">Csak az elmúlt 30 nap érhető el.</string>
+
+    <string name="overview_metrics">Metrikák</string>
+    <string name="window_week">7 nap</string>
+    <string name="window_month">30 nap</string>
+
+    <string name="greeting_morning">Jó reggelt</string>
+    <string name="greeting_afternoon">Szép napot</string>
+    <string name="greeting_evening">Jó estét</string>
+    <string name="coming_soon">Készül. Előbb a dashboard.</string>
 </resources>

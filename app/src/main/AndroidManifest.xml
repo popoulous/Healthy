@@ -21,8 +21,20 @@
     -->
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
 
+    <!--
+      Declared so the package manager will tell us their display names; a data
+      origin is only a package name, and "Mi Fitness" reads better than
+      "com.xiaomi.wearable". Any other source falls back to its package name
+      rather than the app asking to see every package installed.
+    -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- Mi Fitness — the watch -->
+        <package android:name="com.xiaomi.wearable" />
+        <!-- Zepp Life — the scale -->
+        <package android:name="com.xiaomi.hm.health" />
+        <package android:name="com.google.android.apps.fitness" />
+        <package android:name="com.sec.android.app.shealth" />
     </queries>
 
     <application

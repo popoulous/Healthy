@@ -15,7 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import hu.galambos.healthy.data.fake.FakeHealthRepository
+import hu.galambos.healthy.domain.metric.MetricRegistry
+import hu.galambos.healthy.domain.summary.TrendWindow
 import hu.galambos.healthy.ui.navigation.Destination
+import hu.galambos.healthy.ui.overview.DashboardState
 import hu.galambos.healthy.ui.overview.OverviewScreen
 import hu.galambos.healthy.ui.settings.SettingsScreen
 import hu.galambos.healthy.ui.sources.SourcesScreen
@@ -23,7 +27,12 @@ import hu.galambos.healthy.ui.theme.HealthyTheme
 import hu.galambos.healthy.ui.trends.TrendsScreen
 
 @Composable
-fun HealthyApp(modifier: Modifier = Modifier) {
+fun HealthyApp(
+    dashboard: DashboardState,
+    onWindowChange: (TrendWindow) -> Unit,
+    modifier: Modifier = Modifier,
+    onGrantRequested: (() -> Unit)? = null,
+) {
     var selected by rememberSaveable { mutableStateOf(Destination.Overview) }
 
     Scaffold(
@@ -49,7 +58,13 @@ fun HealthyApp(modifier: Modifier = Modifier) {
     ) { innerPadding ->
         val contentModifier = Modifier.padding(innerPadding)
         when (selected) {
-            Destination.Overview -> OverviewScreen(contentModifier)
+            Destination.Overview -> OverviewScreen(
+                state = dashboard,
+                onWindowChange = onWindowChange,
+                modifier = contentModifier,
+                onGrantRequested = onGrantRequested,
+            )
+
             Destination.Trends -> TrendsScreen(contentModifier)
             Destination.Sources -> SourcesScreen(contentModifier)
             Destination.Settings -> SettingsScreen(contentModifier)
@@ -60,5 +75,15 @@ fun HealthyApp(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 private fun HealthyAppPreview() {
-    HealthyTheme { HealthyApp() }
+    val fake = FakeHealthRepository()
+    HealthyTheme {
+        HealthyApp(
+            dashboard = DashboardState(
+                summaries = MetricRegistry.all.associate {
+                    it.id to fake.summaryOf(it, TrendWindow.Week)
+                },
+            ),
+            onWindowChange = {},
+        )
+    }
 }

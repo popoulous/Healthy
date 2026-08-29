@@ -55,4 +55,46 @@
     <string name="update_required_update">Update Health Connect</string>
     <string name="unavailable_no_store">No app store on this device to install it from.</string>
     <string name="retry">Try again</string>
+
+    <!-- Units -->
+    <string name="unit_count">count</string>
+    <string name="unit_steps">steps</string>
+    <string name="unit_bpm">bpm</string>
+    <string name="unit_percent">%</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_hours">h</string>
+    <string name="unit_m">m</string>
+    <string name="unit_km">km</string>
+    <string name="unit_l">l</string>
+    <string name="unit_celsius">°C</string>
+    <string name="unit_mmol_l">mmol/l</string>
+    <string name="unit_mmhg">mmHg</string>
+    <string name="unit_w">W</string>
+    <string name="unit_m_s">m/s</string>
+    <string name="unit_vo2">ml/kg/min</string>
+    <string name="unit_minutes">min</string>
+    <string name="unit_breaths">breaths/min</string>
+
+    <string name="duration_hours_minutes">%1$dh %2$dm</string>
+    <string name="timestamp_today">Today %1$s</string>
+    <string name="timestamp_yesterday">Yesterday %1$s</string>
+
+    <!-- Card states -->
+    <string name="card_not_granted">Not allowed</string>
+    <string name="card_allow">Allow</string>
+    <string name="card_no_data">No data</string>
+    <string name="card_no_data_detail">Nothing has written this yet.</string>
+    <string name="card_failed">Could not read</string>
+    <string name="card_rate_limited">Health Connect is busy. Try again in a moment.</string>
+    <string name="card_history_limited">Only the last 30 days are available.</string>
+
+    <string name="overview_metrics">Metrics</string>
+    <string name="window_week">7 days</string>
+    <string name="window_month">30 days</string>
+
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="coming_soon">Being built. The dashboard comes first.</string>
 </resources>

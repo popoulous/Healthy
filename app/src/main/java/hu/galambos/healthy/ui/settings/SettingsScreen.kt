@@ -2,14 +2,15 @@ package hu.galambos.healthy.ui.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import hu.galambos.healthy.ui.components.PlaceholderScreen
+import androidx.compose.ui.res.stringResource
+import hu.galambos.healthy.R
+import hu.galambos.healthy.ui.components.MessageScreen
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(
-        title = "Settings",
-        description = "Theme, units, refresh, and a way into the Health Connect " +
-            "permission screen. Arrives in F5.",
+    MessageScreen(
+        title = stringResource(R.string.tab_settings),
+        body = stringResource(R.string.coming_soon),
         modifier = modifier,
     )
 }

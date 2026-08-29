@@ -2,7 +2,11 @@ package hu.galambos.healthy.domain.metric
 
 import androidx.annotation.StringRes
 import androidx.health.connect.client.records.Record
+import java.time.Instant
 import kotlin.reflect.KClass
+
+/** A single reading pulled out of a record: what it said, and when. */
+data class Reading(val value: Double, val time: Instant)
 
 /**
  * One row per metric, and everything else follows from it: the permission the
@@ -22,11 +26,17 @@ data class MetricDescriptor(
     val unit: MetricUnit,
     val accent: MetricAccent = MetricAccent.Neutral,
     /**
-     * The headline number, read from the newest raw record. Aggregates carry
-     * neither a timestamp nor a source app, which the design shows on every
+     * Pulls the reading out of a raw record. Aggregates carry neither a
+     * timestamp nor a source app, both of which the design shows on every
      * card, so the newest record is always fetched as well — one record is
      * cheap.
+     *
+     * Reading the time here rather than centrally is not an accident: Health
+     * Connect keeps the interfaces that would tell a record's time apart
+     * (instantaneous versus interval) internal to the library, and the row
+     * that names the record type is the one place that already knows which
+     * it is.
      */
-    val latestValue: (Record) -> Double?,
+    val reading: (Record) -> Reading?,
     val trend: TrendStrategy,
 )

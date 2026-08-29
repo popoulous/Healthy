@@ -28,7 +28,7 @@ object MetricRegistry {
             titleRes = R.string.metric_steps,
             unit = MetricUnit.Steps,
             accent = MetricAccent.Steps,
-            latestValue = { (it as? StepsRecord)?.count?.toDouble() },
+            reading = { r -> (r as? StepsRecord)?.let { Reading(it.count.toDouble(), it.endTime) } },
             trend = TrendStrategy.Aggregate(
                 metrics = setOf(StepsRecord.COUNT_TOTAL),
                 value = { it[StepsRecord.COUNT_TOTAL]?.toDouble() },
@@ -43,8 +43,10 @@ object MetricRegistry {
             accent = MetricAccent.Heart,
             // A heart rate record is a series; the last sample in it is the
             // most recent reading the watch took.
-            latestValue = { record ->
-                (record as? HeartRateRecord)?.samples?.lastOrNull()?.beatsPerMinute?.toDouble()
+            reading = { record ->
+                (record as? HeartRateRecord)?.samples?.lastOrNull()?.let { sample ->
+                    Reading(sample.beatsPerMinute.toDouble(), sample.time)
+                }
             },
             trend = TrendStrategy.Aggregate(
                 metrics = setOf(HeartRateRecord.BPM_AVG),
@@ -58,9 +60,9 @@ object MetricRegistry {
             titleRes = R.string.metric_sleep,
             unit = MetricUnit.Hours,
             accent = MetricAccent.Sleep,
-            latestValue = { record ->
+            reading = { record ->
                 (record as? SleepSessionRecord)?.let {
-                    Duration.between(it.startTime, it.endTime).toMinutes() / 60.0
+                    Reading(Duration.between(it.startTime, it.endTime).toMinutes() / 60.0, it.endTime)
                 }
             },
             trend = TrendStrategy.Aggregate(
@@ -77,7 +79,7 @@ object MetricRegistry {
             titleRes = R.string.metric_oxygen_saturation,
             unit = MetricUnit.Percent,
             accent = MetricAccent.Oxygen,
-            latestValue = { (it as? OxygenSaturationRecord)?.percentage?.value },
+            reading = { r -> (r as? OxygenSaturationRecord)?.let { Reading(it.percentage.value, it.time) } },
             // Health Connect offers no aggregate for blood oxygen.
             trend = TrendStrategy.Samples,
         ),
@@ -88,7 +90,9 @@ object MetricRegistry {
             titleRes = R.string.metric_active_calories,
             unit = MetricUnit.Kilocalories,
             accent = MetricAccent.Calories,
-            latestValue = { (it as? ActiveCaloriesBurnedRecord)?.energy?.inKilocalories },
+            reading = { r ->
+                (r as? ActiveCaloriesBurnedRecord)?.let { Reading(it.energy.inKilocalories, it.endTime) }
+            },
             trend = TrendStrategy.Aggregate(
                 metrics = setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
                 value = { it[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories },
@@ -101,7 +105,9 @@ object MetricRegistry {
             titleRes = R.string.metric_total_calories,
             unit = MetricUnit.Kilocalories,
             accent = MetricAccent.Calories,
-            latestValue = { (it as? TotalCaloriesBurnedRecord)?.energy?.inKilocalories },
+            reading = { r ->
+                (r as? TotalCaloriesBurnedRecord)?.let { Reading(it.energy.inKilocalories, it.endTime) }
+            },
             trend = TrendStrategy.Aggregate(
                 metrics = setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
                 value = { it[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories },
@@ -114,7 +120,7 @@ object MetricRegistry {
             titleRes = R.string.metric_weight,
             unit = MetricUnit.Kilograms,
             accent = MetricAccent.Weight,
-            latestValue = { (it as? WeightRecord)?.weight?.inKilograms },
+            reading = { r -> (r as? WeightRecord)?.let { Reading(it.weight.inKilograms, it.time) } },
             trend = TrendStrategy.Aggregate(
                 metrics = setOf(WeightRecord.WEIGHT_AVG),
                 value = { it[WeightRecord.WEIGHT_AVG]?.inKilograms },
