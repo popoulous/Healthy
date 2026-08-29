@@ -25,3 +25,9 @@ keystore.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Working documents — the owner's own notes and rules, not part of the product.
+# README.md is the exception: it is what the repository is for.
+CLAUDE.md
+IMPLEMENTATION_PLAN.md
+health-connect-dashboard-brief.md
