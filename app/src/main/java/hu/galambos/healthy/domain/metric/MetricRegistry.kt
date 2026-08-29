@@ -62,6 +62,7 @@ object MetricRegistry {
         // --- The headline seven ---------------------------------------------
         MetricDescriptor(
             id = MetricId.Steps,
+            headline = Headline.DailyTotal,
             recordType = StepsRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_steps,
@@ -94,6 +95,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.Sleep,
+            headline = Headline.DailyTotal,
             recordType = SleepSessionRecord::class,
             category = MetricCategory.Sleep,
             titleRes = R.string.metric_sleep,
@@ -107,12 +109,7 @@ object MetricRegistry {
                     )
                 }
             },
-            trend = TrendStrategy.Aggregate(
-                metrics = setOf(SleepSessionRecord.SLEEP_DURATION_TOTAL),
-                value = { result ->
-                    result[SleepSessionRecord.SLEEP_DURATION_TOTAL]?.let { it.toMinutes() / 60.0 }
-                },
-            ),
+            trend = TrendStrategy.SessionsByEnd,
         ),
         MetricDescriptor(
             id = MetricId.OxygenSaturation,
@@ -129,6 +126,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.ActiveCalories,
+            headline = Headline.DailyTotal,
             recordType = ActiveCaloriesBurnedRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_active_calories,
@@ -146,6 +144,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.TotalCalories,
+            headline = Headline.DailyTotal,
             recordType = TotalCaloriesBurnedRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_total_calories,
@@ -178,6 +177,7 @@ object MetricRegistry {
         // --- Activity -------------------------------------------------------
         MetricDescriptor(
             id = MetricId.Distance,
+            headline = Headline.DailyTotal,
             recordType = DistanceRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_distance,
@@ -192,6 +192,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.ElevationGained,
+            headline = Headline.DailyTotal,
             recordType = ElevationGainedRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_elevation,
@@ -206,6 +207,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.Exercise,
+            headline = Headline.DailyTotal,
             recordType = ExerciseSessionRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_exercise,
@@ -225,6 +227,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.FloorsClimbed,
+            headline = Headline.DailyTotal,
             recordType = FloorsClimbedRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_floors,
@@ -308,6 +311,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.WheelchairPushes,
+            headline = Headline.DailyTotal,
             recordType = WheelchairPushesRecord::class,
             category = MetricCategory.Activity,
             titleRes = R.string.metric_wheelchair_pushes,
@@ -372,6 +376,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.BasalMetabolicRate,
+            headline = Headline.DailyTotal,
             recordType = BasalMetabolicRateRecord::class,
             category = MetricCategory.Body,
             titleRes = R.string.metric_basal_rate,
@@ -487,6 +492,7 @@ object MetricRegistry {
         // --- Nutrition ------------------------------------------------------
         MetricDescriptor(
             id = MetricId.Hydration,
+            headline = Headline.DailyTotal,
             recordType = HydrationRecord::class,
             category = MetricCategory.Nutrition,
             titleRes = R.string.metric_hydration,
@@ -499,6 +505,7 @@ object MetricRegistry {
         ),
         MetricDescriptor(
             id = MetricId.Nutrition,
+            headline = Headline.DailyTotal,
             recordType = NutritionRecord::class,
             category = MetricCategory.Nutrition,
             titleRes = R.string.metric_nutrition,
@@ -519,6 +526,7 @@ object MetricRegistry {
         // --- Wellness -------------------------------------------------------
         MetricDescriptor(
             id = MetricId.Mindfulness,
+            headline = Headline.DailyTotal,
             recordType = MindfulnessSessionRecord::class,
             category = MetricCategory.Wellness,
             titleRes = R.string.metric_mindfulness,

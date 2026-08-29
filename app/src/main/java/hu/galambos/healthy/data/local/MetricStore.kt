@@ -20,7 +20,10 @@ import java.time.LocalDate
  * holds and redraws when a sync lands. That is the difference between opening
  * to a filled screen and opening to thirty-three pending queries.
  */
-class MetricStore(private val database: HealthyDatabase) {
+class MetricStore(
+    private val database: HealthyDatabase,
+    private val now: () -> Instant = Instant::now,
+) {
 
     private val metrics = database.metricDao()
 
@@ -81,7 +84,12 @@ class MetricStore(private val database: HealthyDatabase) {
     suspend fun putLatest(id: MetricId, point: DataPoint?) {
         if (point == null) return
         val existing = metrics.latestFor(id.name)
-        if (existing != null && existing.timeEpochMillis > point.time.toEpochMilli()) return
+        // Newest wins, except that a stored time in the future cannot be
+        // newest: it is a reading an earlier version dated by when its record
+        // would end rather than when it was taken, and holding on to it would
+        // lock the metric to a row nothing can ever replace.
+        val stored = existing?.timeEpochMillis?.takeIf { it <= now().toEpochMilli() }
+        if (stored != null && stored > point.time.toEpochMilli()) return
         metrics.upsertLatest(
             listOf(
                 LatestReadingEntity(

@@ -1,5 +1,7 @@
 package hu.galambos.healthy.domain.summary
 
+import hu.galambos.healthy.domain.metric.Headline
+import hu.galambos.healthy.domain.metric.MetricDescriptor
 import hu.galambos.healthy.domain.metric.MetricId
 import java.time.Instant
 import java.time.LocalDate
@@ -12,7 +14,10 @@ data class MetricSummary(
     val latest: DataPoint? = null,
     /** One entry per day in the window, oldest first. Days without data carry null. */
     val trend: List<Bucket> = emptyList(),
-)
+) {
+    /** Today's bucket, which is the last one the window holds. */
+    val today: Double? get() = trend.lastOrNull()?.value
+}
 
 data class DataPoint(
     val value: Double,
@@ -22,6 +27,19 @@ data class DataPoint(
 )
 
 data class Bucket(val date: LocalDate, val value: Double?)
+
+/**
+ * The number the card leads with, per what the metric means.
+ *
+ * A day with no data yet falls back to the newest reading rather than showing
+ * nothing: a card that has a value from this morning should say so, not go
+ * blank because today's bucket has not been written.
+ */
+fun MetricSummary.headlineValue(descriptor: MetricDescriptor): Double? =
+    when (descriptor.headline) {
+        Headline.DailyTotal -> today ?: latest?.value
+        Headline.Latest -> latest?.value
+    }
 
 /**
  * "Not granted" and "granted but empty" are deliberately different states.

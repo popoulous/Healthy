@@ -32,6 +32,7 @@ import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.FailureReason
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
+import hu.galambos.healthy.domain.summary.headlineValue
 import hu.galambos.healthy.ui.format.formatTimestamp
 import hu.galambos.healthy.ui.format.formatValue
 import hu.galambos.healthy.ui.theme.HealthyTheme
@@ -95,7 +96,10 @@ private fun Loaded(descriptor: MetricDescriptor, summary: MetricSummary, accent:
         Placeholder(stringResource(R.string.card_no_data))
         return
     }
-    val formatted = formatValue(latest.value, descriptor.unit)
+    val formatted = formatValue(
+        summary.headlineValue(descriptor) ?: latest.value,
+        descriptor.unit,
+    )
 
     Row(
         verticalAlignment = Alignment.Bottom,

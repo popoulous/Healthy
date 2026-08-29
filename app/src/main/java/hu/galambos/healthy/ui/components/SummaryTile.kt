@@ -25,6 +25,7 @@ import hu.galambos.healthy.domain.summary.Bucket
 import hu.galambos.healthy.domain.summary.DataPoint
 import hu.galambos.healthy.domain.summary.LoadState
 import hu.galambos.healthy.domain.summary.MetricSummary
+import hu.galambos.healthy.domain.summary.headlineValue
 import hu.galambos.healthy.domain.summary.stats
 import hu.galambos.healthy.ui.format.formatValue
 import hu.galambos.healthy.ui.theme.HealthyTheme
@@ -65,7 +66,10 @@ fun SummaryTile(
 
             val latest = summary.latest
             if (summary.state == LoadState.Loaded && latest != null) {
-                val formatted = formatValue(latest.value, descriptor.unit)
+                val formatted = formatValue(
+                    summary.headlineValue(descriptor) ?: latest.value,
+                    descriptor.unit,
+                )
                 Text(
                     text = formatted.number,
                     style = MaterialTheme.typography.titleMedium,

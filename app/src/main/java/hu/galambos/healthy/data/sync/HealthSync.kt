@@ -6,6 +6,7 @@ import hu.galambos.healthy.data.HealthRepository
 import hu.galambos.healthy.data.local.MetricStore
 import hu.galambos.healthy.domain.metric.MetricDescriptor
 import hu.galambos.healthy.domain.metric.MetricRegistry
+import hu.galambos.healthy.domain.metric.TrendStrategy
 import java.time.Instant
 import java.time.LocalDate
 
@@ -25,6 +26,17 @@ class HealthSync(
 ) {
 
     /**
+     * Whether the session-based metrics have been rebuilt in this process.
+     *
+     * Their daily value is derived here rather than by Health Connect, so any
+     * change to how a session is attributed to a day leaves every stored
+     * bucket wrong until it is read again. Once per launch is enough, and it
+     * is affordable: a year of nights is a few hundred records, not the
+     * hundreds of thousands a year of heart rate would be.
+     */
+    private var sessionsRebuilt = false
+
+    /**
      * [force] is set when the user asked: a launch, a pull, the refresh
      * button. Those are precisely the moments someone suspects the screen is
      * stale, so the recent days are read again rather than trusting the change
@@ -39,6 +51,15 @@ class HealthSync(
             val end = today()
             Log.d(TAG, "forced refresh — re-reading the last $RECENT_DAYS days")
             MetricRegistry.all.forEach { readInto(it, end.minusDays(RECENT_DAYS), end) }
+
+            if (!sessionsRebuilt) {
+                val sessions = MetricRegistry.all.filter {
+                    it.trend == TrendStrategy.SessionsByEnd
+                }
+                Log.d(TAG, "rebuilding ${sessions.size} session metric(s) over $INITIAL_DAYS days")
+                sessions.forEach { readInto(it, end.minusDays(INITIAL_DAYS), end) }
+                sessionsRebuilt = true
+            }
         }
 
         if (token == null) {
