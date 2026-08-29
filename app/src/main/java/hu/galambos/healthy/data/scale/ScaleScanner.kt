@@ -4,14 +4,15 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.content.ContextCompat
+import hu.galambos.healthy.BuildConfig
 import hu.galambos.healthy.domain.scale.ScaleAdvertisement
 import hu.galambos.healthy.domain.scale.ScaleReading
 import kotlinx.coroutines.channels.awaitClose
@@ -88,16 +89,27 @@ class ScaleScanner(private val context: Context) {
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val payload = result.scanRecord?.serviceData?.get(WEIGHT_SCALE_SERVICE)
-                    ?: return
+                if (payload == null) {
+                    if (BuildConfig.DEBUG) {
+                        Log.v(TAG, "advertisement without weight-scale data: ${result.device.address}")
+                    }
+                    return
+                }
+                if (BuildConfig.DEBUG) Log.d(TAG, "scale payload ${payload.size} bytes")
                 ScaleAdvertisement.parse(payload)?.let { trySend(it) }
             }
 
             override fun onScanFailed(errorCode: Int) {
+                Log.w(TAG, "scan failed: $errorCode")
                 close()
             }
         }
 
-        val filter = ScanFilter.Builder().setServiceData(WEIGHT_SCALE_SERVICE, ByteArray(0), ByteArray(0)).build()
+        // No filter. A ScanFilter on service *data* needs a mask, and an empty
+        // one is read as "match nothing" on some stacks — which is a silent
+        // failure, the worst kind. The scale's advertisement is picked out in
+        // the callback instead; a scan lasting seconds can afford to see
+        // everything in the room.
         val settings = ScanSettings.Builder()
             // A weigh-in lasts seconds and the user is watching the screen, so
             // latency matters more than the battery here. Scanning only runs
@@ -105,11 +117,17 @@ class ScaleScanner(private val context: Context) {
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .build()
 
-        scanner.startScan(listOf(filter), settings, callback)
-        awaitClose { scanner.stopScan(callback) }
+        Log.d(TAG, "listening for the scale")
+        scanner.startScan(emptyList(), settings, callback)
+        awaitClose {
+            Log.d(TAG, "stopped listening")
+            scanner.stopScan(callback)
+        }
     }
 
     private companion object {
+        const val TAG = "HealthyScale"
+
         /** The standard Bluetooth Weight Scale service the Mi scale broadcasts under. */
         val WEIGHT_SCALE_SERVICE: ParcelUuid =
             ParcelUuid(UUID.fromString("0000181b-0000-1000-8000-00805f9b34fb"))

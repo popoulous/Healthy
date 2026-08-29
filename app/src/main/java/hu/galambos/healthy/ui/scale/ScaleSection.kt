@@ -88,9 +88,6 @@ private fun Ready(
                     style = MaterialTheme.typography.displaySmall,
                 )
             }
-            OutlinedButton(onClick = onStop, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.scale_stop))
-            }
         }
 
         state.recorded != null -> {

@@ -203,7 +203,6 @@
 
     <string name="settings_scale">Scale</string>
     <string name="scale_start">Take a measurement</string>
-    <string name="scale_stop">Stop</string>
     <string name="scale_step_on">Step on the scale, barefoot. Healthy is listening.</string>
     <string name="scale_recorded">Recorded. Body composition is on the dashboard.</string>
     <string name="scale_needs_android12">Reading the scale needs Android 12 or newer. Below that, Android also requires location access for a Bluetooth scan, which this app will not ask for.</string>

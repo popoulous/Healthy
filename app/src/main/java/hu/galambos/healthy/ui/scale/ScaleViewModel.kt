@@ -52,6 +52,7 @@ class ScaleViewModel(
     fun startListening() {
         refreshAvailability()
         if (_state.value.availability != ScaleAvailability.Ready) return
+        if (listenJob?.isActive == true) return
 
         listenJob?.cancel()
         _state.update { it.copy(listening = true, live = null, recorded = null) }
@@ -63,9 +64,11 @@ class ScaleViewModel(
                 // impedance has arrived. Anything earlier is a number on its
                 // way somewhere.
                 if (reading.isComplete) {
+                    // Storing is keyed by the measurement's own timestamp, so
+                    // the scale repeating its last result costs nothing and a
+                    // second weigh-in is a second record.
                     recorder.record(reading, settings.settings.first())
-                    _state.update { it.copy(recorded = reading, listening = false) }
-                    stopListening()
+                    _state.update { it.copy(recorded = reading) }
                 }
             }
         }

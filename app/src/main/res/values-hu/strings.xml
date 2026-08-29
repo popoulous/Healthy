@@ -194,7 +194,6 @@
 
     <string name="settings_scale">Mérleg</string>
     <string name="scale_start">Mérés indítása</string>
-    <string name="scale_stop">Leállítás</string>
     <string name="scale_step_on">Állj rá a mérlegre, mezítláb. A Healthy figyel.</string>
     <string name="scale_recorded">Rögzítve. A testösszetétel a dashboardon van.</string>
     <string name="scale_needs_android12">A mérleg olvasásához Android 12 vagy újabb kell. Az alatt a Bluetooth-kereséshez az Android helyadat-engedélyt is kér, amit ez az app nem fog kérni.</string>

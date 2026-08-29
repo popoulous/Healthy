@@ -44,6 +44,14 @@ fun HealthyRoot(
     val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
     val scale by scaleViewModel.state.collectAsStateWithLifecycle()
 
+    // Listening for the scale follows the app being in front. Pressing a
+    // button first was a design mistake with an obvious failure mode: step on
+    // the scale, watch nothing happen, conclude the feature is broken. The
+    // radio still stops the moment the app leaves the foreground.
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        scaleViewModel.stopListening()
+    }
+
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.refreshAccess()
         // Throttled inside; coming back from Mi Fitness after a sync is the
@@ -52,6 +60,7 @@ fun HealthyRoot(
         // Bluetooth can be switched off while the app is away, and the answer
         // is only true at the moment it is asked.
         scaleViewModel.refreshAvailability()
+        scaleViewModel.startListening()
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
