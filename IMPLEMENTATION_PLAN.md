@@ -41,7 +41,7 @@ Az architektúra erre a két dologra válasz.
 | **Nincs háttérolvasás az MVP-ben** | A `READ_HEALTH_DATA_IN_BACKGROUND` csak akkor kell, ha az app magától frissül (widget, értesítés). Az MVP megnyitáskor olvas. |
 | **Egy Gradle modul** | Az app egy képernyő plusz egy adatréteg. A modulokra bontás itt csak ceremónia lenne. |
 | **Natív Kotlin, nem React Native** | A Health Connect Android-only, tehát az RN fő haszna (egy kódbázis két platformra) itt nem létezik — iOS-en a HealthKit más API, más adatmodell. A `react-native-health-connect` wrapper 40+ típust fed le a 62-ből, miközben az app teljes létjogosultsága az, hogy *mindent* mutat: a szűk keresztmetszet maga a wrapper lenne. A projekt nehéz részei ráadásul mind az SDK határán vannak (history-engedély, feature-check, aggregátumok, lapozás, kvóta) — ezeket a wrapper mögül kétszer olyan nehéz debuggolni. |
-| **Nincs saját adatbázis az MVP-ben** ~~(visszavonva, lásd §16)~~ | Az indoklás — a Health Connect maga az adatbázis — a *nyers rekordokra* továbbra is áll, és azokat tényleg nem másoljuk. De a mérleg testösszetétele sehol máshol nem létezik, a trend pedig nem élheti túl a Health Connect automatikus törlését anélkül, hogy megőriznénk. Room jön, szűk körre. |
+| **Nincs saját adatbázis az MVP-ben** ~~(visszavonva, lásd §16)~~ | A cache-érvénytelenítési érv téves volt: a Health Connectnek van változáskövető API-ja, és az inkrementális szinkron a támogatott minta. Room jön — a napi bucketeknek, a legfrissebb rekordoknak és a mérleg méréseinek. Nyers mintákat továbbra sem tárolunk, de nem elvből, hanem mert soha nem mutatjuk meg őket. |
 
 ---
 
@@ -548,52 +548,66 @@ mérleg számolja, hanem az app — a Zepp Life is ezt teszi.
 
 ---
 
-## 16. Helyi tárolás — a §2 döntés részleges visszavonása
+## 16. Helyi tárolás és inkrementális szinkron
 
-A §2-ben azt írtam, hogy nincs adatbázis, mert a Health Connect *maga* az
-adatbázis, és egy másolat csak cache-érvénytelenítési problémát venne a
-nyakunkba. Ez akkor igaz volt, de két dolog azóta megváltozott, és mindkettő
-érdemi.
+> **Javítás.** A §2-ben azt írtam, hogy egy másolat „cache-érvénytelenítési
+> problémát" hozna. Ez egy általános aggály volt, amit nem ellenőriztem: a
+> Health Connectnek **van rendes változáskövető API-ja**. A `getChangesToken` /
+> `getChanges` pontosan azt adja, ami kell — beszúrásokat, módosításokat **és
+> törléseket** —, tehát az inkrementális szinkron a támogatott, dokumentált
+> minta, nem valami kerülőút. Az érvem gyengébb volt, mint ahogy előadtam.
+
+Két oka van annak, hogy mégis tárolunk:
 
 **1. Van adat, aminek nincs Health Connect otthona.** A testösszetétel a
-mérlegtől jön, és sehová máshová nem tehető (§15). Ha nem tároljuk, minden
-mérés elvész, amint a képernyő elsötétül.
+mérlegtől jön (§15), és sehová máshová nem tehető.
 
-**2. A trend nem trend, ha csak addig lát, ameddig épp beolvasunk.** A
-Health Connect a felhasználó beállítása szerint automatikusan törölhet régi
-adatot, és a 30 napos korlát is valós. Egy súlykövetés, ami két hónap múlva
-elfelejti az elmúlt fél évet, nem az, amiért az app készült.
+**2. A trend nem trend, ha csak addig lát, ameddig épp beolvasunk.** A Health
+Connect automatikus törlése a *felhasználó* beállítása, nem a miénk. Egy
+súlykövetés, ami fél év múlva elfelejti a tavaszt, nem az, amiért ez az app
+készült.
 
-### 16.1 Mit tárolunk, és mit nem
+### 16.1 A szinkron
+
+1. **Első alkalommal** végigolvassuk, ameddig az engedély enged (a
+   history-engedéllyel a teljes múltat), és **napi bontásban** eltároljuk.
+2. Kérünk egy **changes tokent**, és onnantól minden frissítés csak a token óta
+   történt változásokat kéri le.
+3. Az `UpsertionChange` megmondja, **mely napok** érintettek — azokat a napokat
+   újraszámoljuk és felülírjuk.
+4. A `DeletionChange` **csak az azonosítót adja, a típust nem** (adatvédelmi
+   okból). Ezért törléskor nem tudjuk, melyik nap romlott el — ilyenkor az
+   aktuális ablakot számoljuk újra. A törlés ritka, ez bőven megfizethető.
+5. **A token 30 nap használatlanság után lejár.** Ilyenkor a dokumentált
+   stratégia: az utolsó olvasás időbélyegétől újraolvasunk, és rekord-azonosító
+   alapján deduplikálunk. Ezért az utolsó sikeres szinkron idejét is tároljuk.
+
+### 16.2 Mit tárolunk, és mit nem
 
 | Adat | Hol él | Miért |
 |---|---|---|
-| Nyers Health Connect rekordok | **Sehol** — marad a Health Connectben | Ezek másolása lenne a cache, amitől a §2 óvott. Semmi hasznot nem hozna: a legfrissebb rekordot úgyis kiolvassuk. |
-| **Napi bucketek** (metrika + nap → érték) | Room | Ez a trend. Már összegzett, kicsi, és a napok egymástól függetlenek. |
-| **Mérleg-mérések** (súly + impedancia + számolt értékek) | Room | Nincs más otthonuk. |
+| **Nyers minták** (pl. percenkénti pulzus) | Marad a Health Connectben | Nem azért, mert nem lehetne, hanem mert soha nem mutatjuk meg őket. Egyetlen nap pulzusa több ezer sor; egy évnyi olyan adatbázis, amiből egyetlen képernyő sem olvas. |
+| **Napi bucketek** (metrika + nap → érték) | Room | Ez a trend, és ez az, ami túléli a Health Connect törlését. |
+| **A legfrissebb rekord** metrikánként (érték, idő, forrás) | Room | A kártya fejléce. Egy sor metrikánként. |
+| **Mérleg-mérések** | Room | Nincs más otthonuk (§15). |
 | Beállítások, profil | DataStore | Ahogy eddig. |
 
-### 16.2 Miért nem ugyanaz a cache-probléma
-
-A napi bucketet **kulcsra írjuk felül** (metrika + dátum), minden olvasásnál.
-Ha egy nap adata a Health Connectben megváltozik — utólag szinkronizál egy
-forrás, vagy a felhasználó töröl valamit —, a következő beolvasás felülírja azt
-a napot. Nincs mit érvényteleníteni: a friss ablak mindig felülíródik, a
-régebbi napok pedig **archívum**, nem cache — pont azért vannak ott, mert a
-Health Connect esetleg már nem tudja őket.
+Vagyis a szabály nem „ne másolj", hanem **„azt tárold, amit mutatsz"**. A napi
+bucket és a legfrissebb rekord pont az, amit a felület kirajzol.
 
 ### 16.3 Amit ez megnyit
 
-- **A 90 napos és a teljes időtáv** — amit a design későbbre tett, mert
-  minden nyitásnál újraolvasni drága lett volna. Az archívumból viszont
-  azonnali.
-- **Hideg indítás.** A dashboard a Roomból rajzol, és a Health Connect
-  beolvasása a háttérben frissíti. Nem harminchárom lekérdezésnyi üres képernyő.
-- **A mérleg trendje.** Testzsír és izomtömeg időben, nem csak a legutóbbi
-  mérés.
+- **A 90 napos és a teljes időtáv**, amit a design költség miatt későbbre tett.
+  Az archívumból azonnali.
+- **Hideg indítás.** A dashboard a Roomból rajzol, a Health Connect a háttérben
+  frissít. Nem harminchárom lekérdezésnyi üres képernyő.
+- **Kvóta.** A változás-alapú frissítés töredékét kérdezi annak, amit a mostani
+  „olvassunk újra mindent" ciklus.
+- **A mérleg trendje.** Testzsír és izomtömeg időben, nem csak pillanatkép.
 
 ### 16.4 Sorrend
 
-A Room az **F9**-ben érkezik (§15.4), de már a mérleg *és* a napi bucketek
-tárolásával együtt — nem érdemes kétszer hozzányúlni ugyanahhoz a rétegnek.
-Utána jön a hosszabb időablak, ami innentől olcsó.
+A Room az **F9**-ben érkezik (§15.4), egyszerre a mérleg méréseivel, a napi
+bucketekkel és a changes-token alapú szinkronnal — nem érdemes kétszer
+hozzányúlni ugyanahhoz a réteghez. Utána jön a hosszabb időablak, ami innentől
+olcsó.

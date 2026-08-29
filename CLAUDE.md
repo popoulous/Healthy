@@ -53,12 +53,14 @@ including these.
   The floor is 28, not 34, because the app also has to run on a Galaxy A71
   that stops at Android 13 — so the pre-Android-14 paths must stay working.
 - DataStore Preferences for settings; Room for what has to outlive a read.
-- **Raw Health Connect records are never copied.** Health Connect is their
-  database. What Room holds is what it cannot: scale measurements, which have
-  no Health Connect home at all, and daily buckets, which are an archive of
-  already-summarised values that survives Health Connect's own auto-delete
-  (IMPLEMENTATION_PLAN.md §15–16). Buckets are upserted by metric and date, so
-  a re-read corrects a day rather than needing a cache invalidated.
+- **Store what you display, not what you read.** Room holds daily buckets, the
+  latest record per metric, and scale measurements. Raw samples — a minute-by-
+  minute heart rate — stay in Health Connect, not on principle but because no
+  screen ever shows them and a year of them is a database nothing reads.
+- Syncing is incremental through Health Connect's Changes API, not a re-read.
+  A deletion reports only a record id and not its type, so a deletion triggers
+  re-aggregating the window; an unused token expires after 30 days, so the last
+  successful sync time is stored too. See IMPLEMENTATION_PLAN.md §16.
 - No server component, no DI framework, no chart library (Compose `Canvas`),
   no navigation library — four flat tabs and one detail level are a nullable
   id and `BackHandler`. Adding a dependency needs a reason; the short list is
